@@ -1,0 +1,33 @@
+{
+  "name": "vcorp",
+  "engine": "openai",
+  "display_name": "VCorp",
+  "description": "VCorp OpenAI-compatible API relay / aggregation gateway",
+  "api_key_env": "VCORP_API_KEY",
+  "base_url": "${VCORP_BASE_URL}",
+  "env_vars": [
+    {
+      "name": "VCORP_BASE_URL",
+      "required": false,
+      "secret": false,
+      "default": "https://api.vcorp.ai/v1/chat/completions",
+      "description": "VCorp OpenAI-compatible chat completions URL (include /v1/chat/completions)."
+    }
+  ],
+  "models": [
+    {
+      "name": "gemini-3.8-flash-high",
+      "context_limit": 1000000,
+      "max_tokens": 8192
+    }
+  ],
+  "supports_streaming": true,
+  "requires_auth": true,
+  "setup": {
+    "category": "model",
+    "setup_method": "single_api_key",
+    "group": "additional",
+    "docs_url": "https://api.vcorp.ai",
+    "aliases": ["vcorp.ai", "vcorp-relay"]
+  }
+}

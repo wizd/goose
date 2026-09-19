@@ -57,6 +57,7 @@ pub(crate) mod declarative_providers {
         together,
         trustedrouter,
         venice,
+        vcorp,
         vercel_ai_gateway,
         zai,
         zai_coding_plan,
