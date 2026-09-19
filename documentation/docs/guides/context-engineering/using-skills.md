@@ -33,7 +33,7 @@ goose ships with a built-in skill that is always available without any installat
 
 | Skill | Description |
 |-------|-------------|
-| `web-search` | Search the web using DuckDuckGo (no API key), Tavily, or SearXNG, and extract page content. |
+| `web-search` | Search the web via a China-reachable SearXNG instance and extract page content with r.vcorp.ai. |
 
 For browser automation — navigating pages, clicking, filling forms, and capturing screenshots — install the upstream-maintained browser-use skill:
 
