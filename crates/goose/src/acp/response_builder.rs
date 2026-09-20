@@ -128,6 +128,22 @@ pub(super) struct ModelSelection {
     pub available_models: Vec<ModelOption>,
 }
 
+pub(super) fn build_model_state_from_optional_inventory(
+    current_model: &str,
+    inventory: Option<&ProviderInventoryEntry>,
+) -> ModelSelection {
+    match inventory {
+        Some(inventory) => build_model_state(current_model, inventory),
+        None => ModelSelection {
+            current_model_id: current_model.to_string(),
+            available_models: vec![ModelOption {
+                id: current_model.to_string(),
+                name: current_model.to_string(),
+            }],
+        },
+    }
+}
+
 pub(super) fn build_model_state(
     current_model: &str,
     inventory: &ProviderInventoryEntry,
@@ -566,6 +582,14 @@ mod tests {
             last_refresh_error: None,
         };
         build_model_state("unused", &inventory)
+    }
+
+    #[test]
+    fn test_build_model_state_from_missing_inventory() {
+        assert_eq!(
+            build_model_state_from_optional_inventory("gone", None),
+            model_selection("gone", &["gone"])
+        );
     }
 
     #[test_case(

@@ -16,12 +16,15 @@
   ],
   "models": [
     {
-      "name": "gemini-3.8-flash-high",
+      "name": "google/gemini-3.8-flash",
       "context_limit": 1000000,
       "max_tokens": 8192
     }
   ],
+  "dynamic_models": true,
+  "skip_canonical_filtering": true,
   "supports_streaming": true,
+  "model_doc_link": "https://api.vcorp.ai/v1/models",
   "requires_auth": true,
   "setup": {
     "category": "model",

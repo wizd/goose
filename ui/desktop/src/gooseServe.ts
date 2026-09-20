@@ -311,6 +311,12 @@ const buildGooseServeEnv = (
     env.LOCALAPPDATA = process.env.LOCALAPPDATA || path.join(homeDir, 'AppData', 'Local');
   }
 
+  // Desktop must follow config.yaml / in-app switches. User-scope
+  // GOOSE_PROVIDER / GOOSE_MODEL leftovers (often from the CLI or another
+  // install) would otherwise pin the UI to a provider that no longer exists.
+  delete env.GOOSE_PROVIDER;
+  delete env.GOOSE_MODEL;
+
   for (const [key, value] of Object.entries(additionalEnv)) {
     if (value !== undefined) {
       env[key] = value;

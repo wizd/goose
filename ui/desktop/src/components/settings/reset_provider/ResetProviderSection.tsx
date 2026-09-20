@@ -25,6 +25,7 @@ export default function ResetProviderSection(_props: ResetProviderSectionProps) 
   const handleResetProvider = async () => {
     try {
       await acpClearDefaults();
+      await window.electron.setSetting('recentModels', []);
 
       window.location.reload();
     } catch (error) {

@@ -1,6 +1,6 @@
 # Applied on first run when no user config exists (Custom Distro).
 # See CUSTOM_DISTROS.md
 GOOSE_PROVIDER: vcorp
-GOOSE_MODEL: gemini-3.8-flash-high
+GOOSE_MODEL: google/gemini-3.8-flash
 GOOSE_MODE: smart_approve
 GOOSE_TELEMETRY_ENABLED: false

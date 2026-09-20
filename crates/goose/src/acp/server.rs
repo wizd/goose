@@ -2,10 +2,10 @@ use crate::acp::custom_notifications::*;
 use crate::acp::custom_requests::*;
 use crate::acp::fs::AcpTools;
 pub(super) use crate::acp::response_builder::{
-    agent_thinking_effort_support, build_config_options, build_mode_state, build_model_state,
-    build_provider_options, build_session_info, build_session_setup_config,
-    send_session_setup_notifications, session_meta, session_provider_selection,
-    session_response_meta, should_refresh_inventory_for_session_init,
+    agent_thinking_effort_support, build_config_options, build_mode_state,
+    build_model_state_from_optional_inventory, build_provider_options, build_session_info,
+    build_session_setup_config, send_session_setup_notifications, session_meta,
+    session_provider_selection, session_response_meta, should_refresh_inventory_for_session_init,
 };
 use crate::acp::tool_call_notifier::ToolCallNotifier;
 use crate::acp::{PermissionDecision, ACP_CURRENT_MODEL};
@@ -2434,20 +2434,26 @@ impl GooseAcpAgent {
         model_id: &str,
     ) -> Result<(), agent_client_protocol::Error> {
         let agent = self.get_session_agent(session_id).await?;
-        let current_provider = agent
-            .provider()
-            .await
-            .internal_err_ctx("Failed to get provider")?;
-        let provider_name = current_provider.get_name().to_string();
-        let current_model_config = agent
-            .model_config_for_session(session_id)
-            .await
-            .internal_err_ctx("Failed to resolve model config")?;
+        let provider_name = match agent.provider().await {
+            Ok(provider) => provider.get_name().to_string(),
+            Err(_) => self
+                .session_manager
+                .get_session(session_id, false)
+                .await
+                .ok()
+                .and_then(|session| session.provider_name)
+                .or_else(|| self.config().ok().and_then(|c| c.get_goose_provider().ok()))
+                .ok_or_else(|| {
+                    agent_client_protocol::Error::internal_error()
+                        .data("Failed to get provider: Provider not set")
+                })?,
+        };
+        let current_model_config = agent.model_config_for_session(session_id).await.ok();
         let model_config =
             crate::model_config::model_config_from_user_config_with_session_settings(
                 &provider_name,
                 model_id,
-                Some(&current_model_config),
+                current_model_config.as_ref(),
                 None,
                 None,
             )
@@ -2458,7 +2464,6 @@ impl GooseAcpAgent {
             .internal_err_ctx("Failed to recreate provider")?;
         self.subscribe_thinking_effort_updates(session_id, &agent)
             .await;
-        // model_config is already updated on the session by the agent's update_provider call.
         Ok(())
     }
 
@@ -2488,11 +2493,8 @@ impl GooseAcpAgent {
             .entry_for_provider(&provider_name)
             .await
             .internal_err()?;
-        let Some(inventory) = inventory else {
-            return Err(agent_client_protocol::Error::internal_error()
-                .data(format!("Unknown provider inventory: {}", provider_name)));
-        };
-        let model_state = build_model_state(current_model.as_str(), &inventory);
+        let model_state =
+            build_model_state_from_optional_inventory(current_model.as_str(), inventory.as_ref());
         let mode_state = build_mode_state(goose_mode)?;
         let provider_options = build_provider_options(Some(&provider_name)).await;
         let config_options = build_config_options(
@@ -2555,16 +2557,15 @@ impl GooseAcpAgent {
     ) -> Result<(), agent_client_protocol::Error> {
         let config = self.config()?;
         let agent = self.get_session_agent(session_id).await?;
-        let current_provider = agent
-            .provider()
-            .await
-            .internal_err_ctx("Failed to get provider")?;
-        let current_provider_name = current_provider.get_name();
-        let current_model_config = agent
-            .model_config_for_session(session_id)
-            .await
-            .internal_err_ctx("Failed to resolve model config")?;
-        let current_model = current_model_config.model_name.clone();
+        let current_provider_name = match agent.provider().await {
+            Ok(provider) => provider.get_name().to_string(),
+            Err(_) => String::new(),
+        };
+        let current_model_config = agent.model_config_for_session(session_id).await.ok();
+        let current_model = current_model_config
+            .as_ref()
+            .map(|model_config| model_config.model_name.clone())
+            .unwrap_or_default();
         let use_default_provider = provider_name == DEFAULT_PROVIDER_ID;
         let resolved_provider_name = if use_default_provider {
             config
@@ -2594,7 +2595,7 @@ impl GooseAcpAgent {
             crate::model_config::model_config_from_user_config_with_session_settings(
                 &resolved_provider_name,
                 model,
-                Some(&current_model_config),
+                current_model_config.as_ref(),
                 request_params,
                 context_limit,
             )
