@@ -2304,7 +2304,7 @@ export type DictationTranscribeRequest_unstable = {
      */
     mimeType: string;
     /**
-     * Provider to use: "openai", "groq", "elevenlabs", or "local"
+     * Provider to use: "openai", "groq", "elevenlabs", "model", "service", or "local"
      */
     provider: string;
 };

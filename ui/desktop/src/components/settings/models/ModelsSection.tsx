@@ -7,6 +7,7 @@ import { toastError } from '../../../toasts';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import ResetProviderSection from '../reset_provider/ResetProviderSection';
+import ServicesSection from './ServicesSection';
 import { defineMessages, useIntl } from '../../../i18n';
 
 const i18n = defineMessages({
@@ -111,6 +112,7 @@ export default function ModelsSection({ setView }: ModelsSectionProps) {
           <ModelSettingsButtons setView={setView} />
         </CardContent>
       </Card>
+      <ServicesSection />
       <Card className="pb-2 rounded-lg">
         <CardHeader className="pb-0">
           <CardTitle className="">{intl.formatMessage(i18n.resetTitle)}</CardTitle>

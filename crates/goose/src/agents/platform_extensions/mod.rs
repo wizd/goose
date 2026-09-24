@@ -8,6 +8,7 @@ pub mod chatrecall;
 pub mod code_execution;
 pub mod developer;
 pub mod ext_manager;
+pub mod media;
 pub mod orchestrator;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
@@ -135,6 +136,20 @@ pub static PLATFORM_EXTENSIONS: Lazy<HashMap<&'static str, PlatformExtensionDef>
                 unprefixed_tools: true,
                 hidden: false,
                 client_factory: |ctx| Some(Box::new(summon::SummonClient::new(ctx).unwrap())),
+            },
+        );
+
+        map.insert(
+            media::EXTENSION_NAME,
+            PlatformExtensionDef {
+                name: media::EXTENSION_NAME,
+                display_name: "Media",
+                description:
+                    "Vision, speech, embeddings, and image generation through the configured services",
+                default_enabled: true,
+                unprefixed_tools: true,
+                hidden: false,
+                client_factory: |ctx| Some(Box::new(media::MediaClient::new(ctx).unwrap())),
             },
         );
 

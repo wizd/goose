@@ -73,6 +73,9 @@ impl GooseAcpAgent {
                 };
                 transcribe_with_model(audio_bytes, audio_format).await
             }
+            DictationProvider::Service => {
+                crate::services::transcribe_configured(audio_bytes, extension, &req.mime_type).await
+            }
             remote => {
                 let (model_param, default_model) = dictation_transcribe_params(remote);
                 let model = dictation_selected_model(config, remote)
@@ -310,6 +313,9 @@ fn dictation_model_config_key(provider: DictationProvider) -> Option<String> {
             Some(ELEVENLABS_TRANSCRIPTION_MODEL_CONFIG_KEY.to_string())
         }
         DictationProvider::ModelNative => None,
+        DictationProvider::Service => Some(crate::services::model_key(
+            crate::services::ServiceKind::Stt,
+        )),
         #[cfg(feature = "local-inference")]
         DictationProvider::Local => Some(whisper::LOCAL_WHISPER_MODEL_CONFIG_KEY.to_string()),
     }
@@ -323,6 +329,7 @@ fn dictation_transcribe_params(provider: DictationProvider) -> (&'static str, &'
         DictationProvider::Groq => ("model", GROQ_TRANSCRIPTION_MODEL),
         DictationProvider::ElevenLabs => ("model_id", ELEVENLABS_TRANSCRIPTION_MODEL),
         DictationProvider::ModelNative => ("", ""),
+        DictationProvider::Service => ("", ""),
         #[cfg(feature = "local-inference")]
         DictationProvider::Local => ("", ""),
     }
@@ -336,6 +343,11 @@ fn dictation_default_model(provider: DictationProvider) -> Option<String> {
         DictationProvider::ModelNative => crate::config::Config::global()
             .get_param::<String>("GOOSE_MODEL")
             .ok(),
+        DictationProvider::Service => crate::services::configured_selection(
+            crate::config::Config::global(),
+            crate::services::ServiceKind::Stt,
+        )
+        .map(|(_, model)| model),
         #[cfg(feature = "local-inference")]
         DictationProvider::Local => Some(whisper::recommend_model().to_string()),
     }
@@ -346,6 +358,9 @@ fn dictation_selected_model(config: &Config, provider: DictationProvider) -> Opt
         return crate::config::Config::global()
             .get_param::<String>("GOOSE_MODEL")
             .ok();
+    }
+    if provider == DictationProvider::Service {
+        return dictation_default_model(provider);
     }
 
     #[cfg(feature = "local-inference")]
@@ -386,6 +401,7 @@ fn dictation_available_models(provider: DictationProvider) -> Vec<DictationModel
             description: "ElevenLabs' hosted speech-to-text model.".to_string(),
         }],
         DictationProvider::ModelNative => vec![],
+        DictationProvider::Service => vec![],
         #[cfg(feature = "local-inference")]
         DictationProvider::Local => whisper::available_models()
             .iter()

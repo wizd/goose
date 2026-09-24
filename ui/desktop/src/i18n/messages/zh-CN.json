@@ -911,6 +911,9 @@
   "dictationSettings.updateApiKey": {
     "defaultMessage": "更新 API 密钥"
   },
+  "dictationSettings.useServiceConfig": {
+    "defaultMessage": "使用服务配置"
+  },
   "dictationSettings.voiceDictationProvider": {
     "defaultMessage": "语音输入提供商"
   },
@@ -3956,6 +3959,69 @@
   },
   "sessions.toast.updated": {
     "defaultMessage": "会话描述更新成功"
+  },
+  "serviceSettings.chatDescription": {
+    "defaultMessage": "对话使用的模型，和「切换模型」是同一项设置。"
+  },
+  "serviceSettings.chatName": {
+    "defaultMessage": "聊天"
+  },
+  "serviceSettings.description": {
+    "defaultMessage": "为每个服务选择提供商和模型。Agent 需要对应能力时会按这里调用。"
+  },
+  "serviceSettings.embeddingDescription": {
+    "defaultMessage": "通过 embed_text 工具把文本转成向量。"
+  },
+  "serviceSettings.embeddingName": {
+    "defaultMessage": "向量"
+  },
+  "serviceSettings.imageDescription": {
+    "defaultMessage": "通过 generate_image 工具生成图片。"
+  },
+  "serviceSettings.imageName": {
+    "defaultMessage": "生图"
+  },
+  "serviceSettings.modelPlaceholder": {
+    "defaultMessage": "模型"
+  },
+  "serviceSettings.notWired": {
+    "defaultMessage": "暂未接入"
+  },
+  "serviceSettings.providerPlaceholder": {
+    "defaultMessage": "提供商"
+  },
+  "serviceSettings.realtimeDescription": {
+    "defaultMessage": "先保存配置，实时语音提供商以后再接入。"
+  },
+  "serviceSettings.realtimeName": {
+    "defaultMessage": "实时语音"
+  },
+  "serviceSettings.sttDescription": {
+    "defaultMessage": "听写选择「使用服务配置」时走这里的转写模型。"
+  },
+  "serviceSettings.sttName": {
+    "defaultMessage": "语音转文字"
+  },
+  "serviceSettings.title": {
+    "defaultMessage": "服务"
+  },
+  "serviceSettings.ttsDescription": {
+    "defaultMessage": "通过 text_to_speech 工具把文字读出来。"
+  },
+  "serviceSettings.ttsName": {
+    "defaultMessage": "文字转语音"
+  },
+  "serviceSettings.videoDescription": {
+    "defaultMessage": "先保存配置，视频服务以后再接入。"
+  },
+  "serviceSettings.videoName": {
+    "defaultMessage": "视频"
+  },
+  "serviceSettings.visionDescription": {
+    "defaultMessage": "聊天模型不能看图时，通过 describe_image 工具描述图片。"
+  },
+  "serviceSettings.visionName": {
+    "defaultMessage": "视觉"
   },
   "settings.appearance.description": {
     "defaultMessage": "配置 goose 在你系统中的外观"

@@ -932,6 +932,9 @@
   "dictationSettings.updateApiKey": {
     "defaultMessage": "Update API Key"
   },
+  "dictationSettings.useServiceConfig": {
+    "defaultMessage": "Use service configuration"
+  },
   "dictationSettings.voiceDictationProvider": {
     "defaultMessage": "Voice Dictation Provider"
   },
@@ -4000,6 +4003,69 @@
   },
   "sessions.toast.updated": {
     "defaultMessage": "Session description updated successfully"
+  },
+  "serviceSettings.chatDescription": {
+    "defaultMessage": "The model used for conversation. This is the same choice as Switch models."
+  },
+  "serviceSettings.chatName": {
+    "defaultMessage": "Chat"
+  },
+  "serviceSettings.description": {
+    "defaultMessage": "Choose a provider and model for each service. The agent uses these when it needs that capability."
+  },
+  "serviceSettings.embeddingDescription": {
+    "defaultMessage": "Turns text into vectors through the embed_text tool."
+  },
+  "serviceSettings.embeddingName": {
+    "defaultMessage": "Embeddings"
+  },
+  "serviceSettings.imageDescription": {
+    "defaultMessage": "Draws images through the generate_image tool."
+  },
+  "serviceSettings.imageName": {
+    "defaultMessage": "Image generation"
+  },
+  "serviceSettings.modelPlaceholder": {
+    "defaultMessage": "Model"
+  },
+  "serviceSettings.notWired": {
+    "defaultMessage": "Not connected yet"
+  },
+  "serviceSettings.providerPlaceholder": {
+    "defaultMessage": "Provider"
+  },
+  "serviceSettings.realtimeDescription": {
+    "defaultMessage": "Saved for a later realtime voice provider. Goose does not call it yet."
+  },
+  "serviceSettings.realtimeName": {
+    "defaultMessage": "Realtime voice"
+  },
+  "serviceSettings.sttDescription": {
+    "defaultMessage": "Transcription used when dictation is set to the service configuration."
+  },
+  "serviceSettings.sttName": {
+    "defaultMessage": "Speech to text"
+  },
+  "serviceSettings.title": {
+    "defaultMessage": "Services"
+  },
+  "serviceSettings.ttsDescription": {
+    "defaultMessage": "Speaks text through the text_to_speech tool."
+  },
+  "serviceSettings.ttsName": {
+    "defaultMessage": "Text to speech"
+  },
+  "serviceSettings.videoDescription": {
+    "defaultMessage": "Saved for a later video service. Goose does not call it yet."
+  },
+  "serviceSettings.videoName": {
+    "defaultMessage": "Video"
+  },
+  "serviceSettings.visionDescription": {
+    "defaultMessage": "Describes images through describe_image when the chat model cannot see them."
+  },
+  "serviceSettings.visionName": {
+    "defaultMessage": "Vision"
   },
   "settings.agentLoop.description": {
     "defaultMessage": "Use the operation-based agent loop. Turn this off to use the legacy loop."

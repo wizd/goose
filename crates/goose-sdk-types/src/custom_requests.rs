@@ -1653,7 +1653,7 @@ pub struct DictationTranscribeRequest {
     pub audio: String,
     /// MIME type (e.g. "audio/wav", "audio/webm")
     pub mime_type: String,
-    /// Provider to use: "openai", "groq", "elevenlabs", or "local"
+    /// Provider to use: "openai", "groq", "elevenlabs", "model", "service", or "local"
     pub provider: String,
 }
 

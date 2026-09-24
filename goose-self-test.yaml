@@ -26,7 +26,7 @@ parameters:
     input_type: string
     requirement: optional
     default: "all"
-    description: "Which test phases to run: all, basic, extensions, delegation, reasoning, zai-coding-plan, acp-effort, advanced"
+    description: "Which test phases to run: all, basic, extensions, delegation, vision, media, reasoning, zai-coding-plan, acp-effort, advanced"
 
   - key: test_depth
     input_type: string
@@ -377,6 +377,22 @@ prompt: |
      not with a crash or FFI error.
 
   Log results to: {{ workspace_dir }}/phase3b_vision.md
+  {% endif %}
+
+  {% if test_phases == "all" or "media" in test_phases %}
+  ## 🎙 PHASE 3D: Media services
+
+  The media extension exposes tools only for services that have both a provider and a model:
+  `describe_image`, `text_to_speech`, `embed_text`, and `generate_image`.
+
+  1. List the tools currently available to this session.
+  2. For each media tool, record whether it is present.
+  3. A missing tool is expected when that service is not configured in Settings. Record it as SKIPPED, not as a failure.
+  4. Do not call a live provider unless `GOOSE_SERVICE_IMAGE_PROVIDER` and `GOOSE_SERVICE_IMAGE_MODEL` are both set.
+     If they are set, call `generate_image` with the prompt "a 16 pixel red square" and confirm the result includes a saved file path.
+  5. Realtime voice and video have settings rows but no tools. Do not expect tools for them.
+
+  Log results to: {{ workspace_dir }}/phase3d_media.md
   {% endif %}
 
   {% if test_phases == "all" or "reasoning" in test_phases %}

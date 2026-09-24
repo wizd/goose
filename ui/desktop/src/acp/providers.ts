@@ -204,6 +204,12 @@ export async function acpListProviderModels(providerId: string) {
   return entries.find((e) => e.providerId === providerId)?.models ?? [];
 }
 
+export async function acpListSupportedModels(providerId: string): Promise<string[]> {
+  const client = await getAcpClient();
+  const { models } = await client.goose.providersSupportedModelsList_unstable({ providerId });
+  return models;
+}
+
 export async function acpListProviderCatalogEntries(
   format?: string
 ): Promise<ProviderTemplateCatalogEntryDto[]> {
