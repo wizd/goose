@@ -159,9 +159,14 @@ jobs:
           const manifest = {
             version,
             files: {
-              "win32-x64": `${base}/Goose-win32-x64.zip`,
-              "darwin-arm64": `${base}/Goose.zip`,
-              "darwin-x64": `${base}/Goose_intel_mac.zip`,
+              "win32-x64": `${base}/Goose-desktop-windows-x64.zip`,
+              "darwin-arm64": `${base}/Goose-desktop-mac-arm64.zip`,
+              "darwin-x64": `${base}/Goose-desktop-mac-x64.zip`,
+            },
+            cli: {
+              "win32-x64": `${base}/goose-cli-windows-x64.zip`,
+              "darwin-arm64": `${base}/goose-cli-mac-arm64.tar.gz`,
+              "darwin-x64": `${base}/goose-cli-mac-x64.tar.gz`,
             },
           };
           for (const name of ["Goose.zip.macos.json", "Goose_intel_mac.zip.macos.json"]) {
@@ -175,11 +180,20 @@ jobs:
           writeFileSync("latest.json", JSON.stringify(manifest));
           EOF
           ssh "${ssh_opts[@]}" "$remote" "mkdir -p $(printf '%q' "$dest")"
+          cp Goose-win32-x64.zip Goose-desktop-windows-x64.zip
+          cp Goose.zip Goose-desktop-mac-arm64.zip
+          cp Goose_intel_mac.zip Goose-desktop-mac-x64.zip
+          cp goose-x86_64-pc-windows-msvc.zip goose-cli-windows-x64.zip
+          cp goose-aarch64-apple-darwin.tar.gz goose-cli-mac-arm64.tar.gz
+          cp goose-x86_64-apple-darwin.tar.gz goose-cli-mac-x64.tar.gz
           rsh="ssh -i ${HOME}/.ssh/goose_update -o StrictHostKeyChecking=accept-new"
           rsync -az --chmod=D755,F644 -e "$rsh" \
-            Goose-win32-x64.zip \
-            Goose.zip \
-            Goose_intel_mac.zip \
+            Goose-desktop-windows-x64.zip \
+            Goose-desktop-mac-arm64.zip \
+            Goose-desktop-mac-x64.zip \
+            goose-cli-windows-x64.zip \
+            goose-cli-mac-arm64.tar.gz \
+            goose-cli-mac-x64.tar.gz \
             "${remote}:${dest}/"
           rsync -az --chmod=F644 -e "$rsh" \
             latest.json \
