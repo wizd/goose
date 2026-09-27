@@ -56,6 +56,58 @@ export function getAutoDownloadDisabled(): boolean {
   return autoDownloadDisabled;
 }
 
+async function applyUpdateServerResult(
+  currentVersion: string,
+  when: string
+): Promise<'applied' | 'unavailable'> {
+  let result;
+  try {
+    result = await githubUpdater.checkForUpdates();
+  } catch (error) {
+    log.info(`Update server check failed ${when}:`, error);
+    return 'unavailable';
+  }
+  if (result.error) {
+    log.info(`Update server check failed ${when}: ${result.error}`);
+    return 'unavailable';
+  }
+
+  isUsingGitHubFallback = true;
+  if (result.updateAvailable && result.downloadUrl && result.latestVersion) {
+    githubUpdateInfo = {
+      latestVersion: result.latestVersion,
+      downloadUrl: result.downloadUrl,
+      releaseUrl: result.releaseUrl,
+    };
+    trackUpdateCheckCompleted('available', currentVersion, {
+      latestVersion: result.latestVersion,
+      usingFallback: true,
+    });
+    updateAvailable = true;
+    lastUpdateState = { updateAvailable: true, latestVersion: result.latestVersion };
+    updateTrayIcon(true);
+    sendStatusToWindow('update-available', { version: result.latestVersion });
+    if (!autoDownloadDisabled) {
+      log.info(`Auto-downloading update from the update server ${when}...`);
+      await githubAutoDownload(result.downloadUrl, result.latestVersion, when);
+    }
+    return 'applied';
+  }
+
+  githubUpdateInfo = {};
+  trackUpdateCheckCompleted('not_available', currentVersion, {
+    latestVersion: result.latestVersion,
+    usingFallback: true,
+  });
+  updateAvailable = false;
+  lastUpdateState = { updateAvailable: false };
+  updateTrayIcon(false);
+  sendStatusToWindow('update-not-available', {
+    version: autoUpdater.currentVersion?.version || currentVersion,
+  });
+  return 'applied';
+}
+
 // Register IPC handlers (only once)
 export function registerUpdateIpcHandlers() {
   if (ipcUpdateHandlersRegistered) {
@@ -95,6 +147,14 @@ export function registerUpdateIpcHandlers() {
         `About to check for updates with currentVersion: ${JSON.stringify(autoUpdater.currentVersion)}`
       );
       log.info(`Feed URL: ${autoUpdater.getFeedURL()}`);
+
+      const updateServer = await applyUpdateServerResult(currentVersion, 'manual check');
+      if (updateServer === 'applied') {
+        return {
+          updateInfo: null,
+          error: null,
+        };
+      }
 
       const result = await autoUpdater.checkForUpdates();
       const duration = Date.now() - checkStartTime;
@@ -424,9 +484,17 @@ export function setupAutoUpdater(tray?: Tray) {
       );
     }, 60000);
 
-    autoUpdater
-      .checkForUpdates()
-      .then((result) => {
+    void applyUpdateServerResult(currentVersion, 'on startup').then((updateServer) => {
+      if (updateServer === 'applied') {
+        clearTimeout(timeoutWarning);
+        clearTimeout(timeoutError);
+        log.info(`=== STARTUP UPDATE CHECK COMPLETED in ${Date.now() - checkStartTime}ms ===`);
+        return;
+      }
+
+      autoUpdater
+        .checkForUpdates()
+        .then((result) => {
         clearTimeout(timeoutWarning);
         clearTimeout(timeoutError);
         const duration = Date.now() - checkStartTime;
@@ -518,6 +586,7 @@ export function setupAutoUpdater(tray?: Tray) {
           });
         }
       });
+    });
   }, 5000); // Wait 5 seconds after app starts
 
   // Handle update events

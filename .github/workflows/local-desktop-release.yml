@@ -119,3 +119,55 @@ jobs:
             --repo "${GITHUB_REPOSITORY}" \
             --title "${VERSION}" \
             --notes "Local desktop build ${VERSION}."
+
+      - name: Upload packages to the update server
+        env:
+          VERSION: ${{ needs.bump-desktop-version.outputs.version }}
+          GOOSE_UPDATE_HOST: ${{ secrets.GOOSE_UPDATE_HOST }}
+          GOOSE_UPDATE_SSH_KEY: ${{ secrets.GOOSE_UPDATE_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GOOSE_UPDATE_HOST}" ] || [ -z "${GOOSE_UPDATE_SSH_KEY}" ]; then
+            echo "GOOSE_UPDATE_HOST or GOOSE_UPDATE_SSH_KEY is unset; skipping the update server upload."
+            exit 0
+          fi
+          install -m 700 -d "${HOME}/.ssh"
+          printf '%s\n' "${GOOSE_UPDATE_SSH_KEY}" > "${HOME}/.ssh/goose_update"
+          chmod 600 "${HOME}/.ssh/goose_update"
+          ssh_opts=(-i "${HOME}/.ssh/goose_update" -o StrictHostKeyChecking=accept-new)
+          remote="goose-update@${GOOSE_UPDATE_HOST}"
+          dest="/data/goose-updates/goose/${VERSION}"
+          base="https://goose-update.vcorp.ai/goose/${VERSION}"
+          VERSION="$VERSION" BASE="$base" node --input-type=module <<'EOF'
+          import { existsSync, readFileSync, writeFileSync } from "node:fs";
+          const version = process.env.VERSION;
+          const base = process.env.BASE;
+          const manifest = {
+            version,
+            files: {
+              "win32-x64": `${base}/Goose-win32-x64.zip`,
+              "darwin-arm64": `${base}/Goose.zip`,
+              "darwin-x64": `${base}/Goose_intel_mac.zip`,
+            },
+          };
+          for (const name of ["Goose.zip.macos.json", "Goose_intel_mac.zip.macos.json"]) {
+            if (!existsSync(name)) continue;
+            const minimumMacOSVersion = JSON.parse(readFileSync(name, "utf8")).minimumMacOSVersion;
+            if (typeof minimumMacOSVersion === "string") {
+              manifest.minimumMacOSVersion = minimumMacOSVersion;
+              break;
+            }
+          }
+          writeFileSync("latest.json", JSON.stringify(manifest));
+          EOF
+          ssh "${ssh_opts[@]}" "$remote" "mkdir -p $(printf '%q' "$dest")"
+          rsh="ssh -i ${HOME}/.ssh/goose_update -o StrictHostKeyChecking=accept-new"
+          rsync -az --chmod=D755,F644 -e "$rsh" \
+            Goose-win32-x64.zip \
+            Goose.zip \
+            Goose_intel_mac.zip \
+            "${remote}:${dest}/"
+          rsync -az --chmod=F644 -e "$rsh" \
+            latest.json \
+            "${remote}:/data/goose-updates/goose/latest.json.next"
+          ssh "${ssh_opts[@]}" "$remote" "mv -f /data/goose-updates/goose/latest.json.next /data/goose-updates/goose/latest.json"

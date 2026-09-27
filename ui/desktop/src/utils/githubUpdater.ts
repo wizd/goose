@@ -6,18 +6,28 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import log from './logger';
-import { safeJsonParse, errorMessage } from './conversionUtils';
+import { errorMessage } from './conversionUtils';
 
-interface GitHubRelease {
-  tag_name: string;
-  name: string;
-  published_at: string;
-  html_url: string;
-  assets: Array<{
-    name: string;
-    browser_download_url: string;
-    size: number;
-  }>;
+export const desktopUpdateManifestUrl =
+  process.env.GOOSE_UPDATE_MANIFEST_URL || 'https://goose-update.vcorp.ai/goose/latest.json';
+
+const updateManifestSchema = z.object({
+  version: z.string().min(1),
+  minimumMacOSVersion: z
+    .string()
+    .regex(/^\d+\.\d+\.\d+$/)
+    .optional(),
+  files: z.record(z.string(), z.string().min(1)),
+});
+
+function updateFileKey(platform: string, arch: string): string {
+  if (platform === 'darwin') {
+    return arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64';
+  }
+  if (platform === 'win32') {
+    return 'win32-x64';
+  }
+  return `linux-${arch}`;
 }
 
 interface UpdateCheckResult {
@@ -483,16 +493,13 @@ export function compareDesktopVersions(latest: string, current: string): number 
 }
 
 export class GitHubUpdater {
-  private readonly owner = process.env.GITHUB_OWNER || 'wizd';
-  private readonly repo = process.env.GITHUB_REPO || 'goose';
   private readonly bundleName = process.env.GOOSE_BUNDLE_NAME || 'Goose';
-  private readonly apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/releases/latest`;
 
   async checkForUpdates(): Promise<UpdateCheckResult> {
     const startTime = Date.now();
     try {
       log.info('=== GitHubUpdater: STARTING UPDATE CHECK ===');
-      log.info(`GitHubUpdater: API URL: ${this.apiUrl}`);
+      log.info(`GitHubUpdater: Manifest URL: ${desktopUpdateManifestUrl}`);
       log.info(`GitHubUpdater: Current app version: ${app.getVersion()}`);
       log.info(`GitHubUpdater: Timestamp: ${new Date().toISOString()}`);
 
@@ -503,9 +510,9 @@ export class GitHubUpdater {
         controller.abort();
       }, 30000);
 
-      const response = await fetch(this.apiUrl, {
+      const response = await fetch(desktopUpdateManifestUrl, {
         headers: {
-          Accept: 'application/vnd.github.v3+json',
+          Accept: 'application/json',
           'User-Agent': `Goose-Desktop/${app.getVersion()}`,
         },
         signal: controller.signal,
@@ -514,24 +521,21 @@ export class GitHubUpdater {
       clearTimeout(timeoutId);
       const fetchDuration = Date.now() - startTime;
       log.info(
-        `GitHubUpdater: GitHub API response status: ${response.status} ${response.statusText} (took ${fetchDuration}ms)`
+        `GitHubUpdater: Update manifest response status: ${response.status} ${response.statusText} (took ${fetchDuration}ms)`
       );
 
       if (!response.ok) {
         const errorText = await response.text();
-        log.error(`GitHubUpdater: GitHub API error response: ${errorText}`);
-        throw new Error(`GitHub API returned ${response.status}: ${response.statusText}`);
+        log.error(`GitHubUpdater: Update manifest error response: ${errorText}`);
+        throw new Error(`Update server returned ${response.status}: ${response.statusText}`);
       }
 
-      const release: GitHubRelease = await safeJsonParse<GitHubRelease>(
-        response,
-        'Failed to get GitHub release information'
-      );
-      log.info(`GitHubUpdater: Found release: ${release.tag_name} (${release.name})`);
-      log.info(`GitHubUpdater: Release published at: ${release.published_at}`);
-      log.info(`GitHubUpdater: Release assets count: ${release.assets.length}`);
+      const manifest = updateManifestSchema.safeParse(await response.json());
+      if (!manifest.success) {
+        throw new Error('This release has invalid update information.');
+      }
 
-      const latestVersion = desktopReleaseVersion(release.tag_name);
+      const latestVersion = desktopReleaseVersion(manifest.data.version);
       const currentVersion = app.getVersion();
 
       log.info(
@@ -548,80 +552,32 @@ export class GitHubUpdater {
         };
       }
 
-      // Find the appropriate download URL based on platform
       const platform = process.platform;
       const arch = process.arch;
       if (platform === 'darwin') {
-        const requirementsAsset = release.assets.find(
-          (asset) => asset.name === 'mac-update-requirements.json'
-        );
-        if (!requirementsAsset) {
+        if (!manifest.data.minimumMacOSVersion) {
           throw new Error('This release does not include macOS compatibility information.');
         }
-        const requirementsResponse = await fetch(requirementsAsset.browser_download_url, {
-          signal: AbortSignal.timeout(30000),
-        });
-        if (!requirementsResponse.ok) {
-          throw new Error('Unable to check macOS update compatibility. Please try again later.');
-        }
-        const requirements = z
-          .object({
-            version: z.literal(latestVersion),
-            minimumMacOSVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
-          })
-          .safeParse(await requirementsResponse.json());
-        if (!requirements.success) {
-          throw new Error('This release has invalid macOS compatibility information.');
-        }
-        if (
-          compareVersions(process.getSystemVersion(), requirements.data.minimumMacOSVersion) < 0
-        ) {
+        if (compareVersions(process.getSystemVersion(), manifest.data.minimumMacOSVersion) < 0) {
           return { updateAvailable: false, latestVersion };
         }
       }
-      let downloadUrl: string | undefined;
-      let assetName: string;
 
-      log.info(`GitHubUpdater: Looking for asset for platform: ${platform}, arch: ${arch}`);
-
-      if (platform === 'darwin') {
-        // macOS
-        if (arch === 'arm64') {
-          assetName = `${this.bundleName}.zip`;
-        } else {
-          assetName = `${this.bundleName}_intel_mac.zip`;
-        }
-      } else if (platform === 'win32') {
-        // Windows - for future support
-        assetName = `${this.bundleName}-win32-x64.zip`;
-      } else {
-        // Linux - for future support
-        assetName = `${this.bundleName}-linux-${arch}.zip`;
-      }
-
-      log.info(`GitHubUpdater: Looking for asset named: ${assetName}`);
-      log.info(`GitHubUpdater: Available assets: ${release.assets.map((a) => a.name).join(', ')}`);
-
-      const asset = release.assets.find((a) => a.name.toLowerCase() === assetName.toLowerCase()); // keeping comparison to lowercase because Goose vs goose
-      if (asset) {
-        downloadUrl = asset.browser_download_url;
-        log.info(`GitHubUpdater: Found matching asset: ${asset.name} (${asset.size} bytes)`);
-        log.info(`GitHubUpdater: Download URL: ${downloadUrl}`);
-      } else {
-        log.warn(`GitHubUpdater: No matching asset found for ${assetName}`);
-      }
-
+      const fileKey = updateFileKey(platform, arch);
+      const downloadUrl = manifest.data.files[fileKey];
+      log.info(`GitHubUpdater: Looking for ${fileKey}`);
       if (!downloadUrl) {
         throw new Error(
           `Update Available but no download URL found for platform: ${platform}, arch: ${arch}`
         );
       }
+      log.info(`GitHubUpdater: Download URL: ${downloadUrl}`);
 
       return {
         updateAvailable: true,
         latestVersion,
         downloadUrl,
-        releaseUrl: release.html_url,
+        releaseUrl: desktopUpdateManifestUrl,
       };
     } catch (error) {
       log.error('GitHubUpdater: Error checking for updates:', error);

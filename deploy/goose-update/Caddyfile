@@ -1,0 +1,11 @@
+{
+	auto_https off
+}
+
+:80 {
+	root * /srv
+	encode gzip zstd
+	@manifest path /goose/latest.json
+	header @manifest Cache-Control "no-store"
+	file_server
+}

@@ -11,5 +11,5 @@ alwaysApply: true
 - 构建号是全局整数，只增不减。上游升级时不归零。`1.52.0+local.5` 的下一版，若上游已是 `1.53.0`，就是 `1.53.0+local.6`。
 - 新构建号取 `wizd/goose` Release 标签和桌面 `package.json` 里已有的最大 `+local.N`，再加 1。
 - 只改桌面 `package.json` 的版本。Cargo 工作区版本和其他 npm 包版本保持官方号。
-- 本地安装包发布到 `https://github.com/wizd/goose`。应用内检查更新只查这个仓库。
+- 本地安装包仍发布到 `https://github.com/wizd/goose`。已安装的应用向 `https://goose-update.vcorp.ai/goose/latest.json` 检查更新，并从这份清单里的地址下载安装包。
 - 不要把本地提交放进 `main`。`main` 只跟上游同步。要发布时在 `my-dev` 上更新并强制推送 `local-build` 标签。
