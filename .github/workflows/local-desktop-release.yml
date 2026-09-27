@@ -2,6 +2,9 @@ name: Local desktop release
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - local-build
 
 permissions:
   contents: write
@@ -46,7 +49,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ui/desktop/package.json
           git commit -m "chore(desktop): release ${version}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            target_branch=my-dev
+          else
+            target_branch="${GITHUB_REF_NAME}"
+          fi
+          git push origin "HEAD:${target_branch}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
