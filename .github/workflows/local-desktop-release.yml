@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 concurrency:
   group: local-desktop-release
@@ -86,6 +87,7 @@ jobs:
     name: Bundle Windows x64
     needs: bump-desktop-version
     permissions:
+      id-token: write
       contents: read
     uses: ./.github/workflows/bundle-windows.yml
     with:
