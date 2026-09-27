@@ -1,0 +1,4 @@
+[submodule "deploy/goose-update"]
+	path = deploy/goose-update
+	url = https://github.com/wizd/goose-update.git
+	branch = main
