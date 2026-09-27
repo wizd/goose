@@ -454,8 +454,36 @@ export async function prepareUpdateInstall(options: {
   });
 }
 
+export function desktopReleaseVersion(tagOrVersion: string): string {
+  if (tagOrVersion.startsWith('desktop-')) {
+    return tagOrVersion.slice('desktop-'.length);
+  }
+  if (/^v\d/.test(tagOrVersion)) {
+    return tagOrVersion.slice(1);
+  }
+  return tagOrVersion;
+}
+
+function splitLocalBuild(version: string): { upstream: string; localBuild: number } {
+  const match = version.match(/^(.*?)\+local\.(\d+)$/);
+  if (!match) {
+    return { upstream: version, localBuild: 0 };
+  }
+  return { upstream: match[1], localBuild: Number(match[2]) };
+}
+
+export function compareDesktopVersions(latest: string, current: string): number {
+  const latestParsed = splitLocalBuild(desktopReleaseVersion(latest));
+  const currentParsed = splitLocalBuild(desktopReleaseVersion(current));
+  const upstreamOrder = compareVersions(latestParsed.upstream, currentParsed.upstream);
+  if (upstreamOrder !== 0) {
+    return upstreamOrder;
+  }
+  return latestParsed.localBuild - currentParsed.localBuild;
+}
+
 export class GitHubUpdater {
-  private readonly owner = process.env.GITHUB_OWNER || 'aaif-goose';
+  private readonly owner = process.env.GITHUB_OWNER || 'wizd';
   private readonly repo = process.env.GITHUB_REPO || 'goose';
   private readonly bundleName = process.env.GOOSE_BUNDLE_NAME || 'Goose';
   private readonly apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/releases/latest`;
@@ -503,15 +531,14 @@ export class GitHubUpdater {
       log.info(`GitHubUpdater: Release published at: ${release.published_at}`);
       log.info(`GitHubUpdater: Release assets count: ${release.assets.length}`);
 
-      const latestVersion = release.tag_name.replace(/^v/, ''); // Remove 'v' prefix if present
+      const latestVersion = desktopReleaseVersion(release.tag_name);
       const currentVersion = app.getVersion();
 
       log.info(
         `GitHubUpdater: Current version: ${currentVersion}, Latest version: ${latestVersion}`
       );
 
-      // Compare versions
-      const updateAvailable = compareVersions(latestVersion, currentVersion) > 0;
+      const updateAvailable = compareDesktopVersions(latestVersion, currentVersion) > 0;
       log.info(`GitHubUpdater: Update available: ${updateAvailable}`);
 
       if (!updateAvailable) {

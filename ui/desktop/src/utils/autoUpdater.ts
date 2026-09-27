@@ -342,7 +342,7 @@ export function setupAutoUpdater(tray?: Tray) {
   // Set the feed URL for GitHub releases
   const feedConfig = {
     provider: 'github' as const,
-    owner: 'aaif-goose',
+    owner: 'wizd',
     repo: 'goose',
     releaseType: 'release' as const,
   };
