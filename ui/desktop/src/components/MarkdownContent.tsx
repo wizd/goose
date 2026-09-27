@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkBreaks from 'remark-breaks';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import { visit } from 'unist-util-visit';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -130,6 +131,33 @@ function applyPerBlockDirection(node: HastNode): void {
 function rehypePerBlockDirection(): (tree: HastNode) => void {
   return (tree) => {
     if (tree) applyPerBlockDirection(tree);
+  };
+}
+
+// react-markdown does not enable rehype-raw, so a raw <br> would show as text.
+// Turn exact break tags into mdast breaks, which render as real line breaks
+// (including inside GFM table cells).
+const HTML_BREAK = /^<br\s*\/?>$/i;
+
+interface MarkdownNode {
+  type: string;
+  value?: string;
+  children: MarkdownNode[];
+}
+
+function remarkHtmlBreaks() {
+  return (tree: MarkdownNode) => {
+    visit(tree, (node, index, parent) => {
+      if (
+        node.type === 'html' &&
+        parent?.children &&
+        typeof index === 'number' &&
+        typeof node.value === 'string' &&
+        HTML_BREAK.test(node.value)
+      ) {
+        parent.children[index] = { type: 'break' } as MarkdownNode;
+      }
+    });
   };
 }
 
@@ -319,7 +347,12 @@ const MarkdownContent = memo(function MarkdownContent({
     >
       <ReactMarkdown
         urlTransform={customUrlTransform}
-        remarkPlugins={[remarkGfm, remarkBreaks, [remarkMath, { singleDollarTextMath: false }]]}
+        remarkPlugins={[
+          remarkGfm,
+          remarkHtmlBreaks,
+          remarkBreaks,
+          [remarkMath, { singleDollarTextMath: false }],
+        ]}
         rehypePlugins={[
           [
             rehypeKatex,

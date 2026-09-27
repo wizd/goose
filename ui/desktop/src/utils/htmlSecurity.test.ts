@@ -120,6 +120,12 @@ describe('HTML Security Detection', () => {
         expect(wrapHTMLInCodeBlock(input)).toBe(expected);
       });
 
+      it('still wraps a line that mixes <br> with dangerous HTML', () => {
+        const input = '换行<br>然后<script>alert(1)</script>';
+        const expected = '```html\n换行<br>然后<script>alert(1)</script>\n```';
+        expect(wrapHTMLInCodeBlock(input)).toBe(expected);
+      });
+
       it('wraps mixed content selectively', () => {
         const input = `Normal text
 <div>This should be wrapped</div>
@@ -165,6 +171,16 @@ Normal text`;
 
       it('preserves inline code', () => {
         const input = 'Use `<br/>` for line breaks';
+        expect(wrapHTMLInCodeBlock(input)).toBe(input);
+      });
+
+      it('preserves tables that use <br> for line breaks', () => {
+        const input = `| 区域 | 说明 |
+| --- | --- |
+| 滨江区 | 每年最高<br>1亿元 |
+| 西湖区 | 分档择优补助：<br/>50%、35% |
+| 余杭区 | 依市级标准<br />基础800万 |
+| 临平区 | 未披露总额 |`;
         expect(wrapHTMLInCodeBlock(input)).toBe(input);
       });
     });

@@ -27,6 +27,10 @@ export function containsHTML(str: string): boolean {
   return hasComments || hasDangerousHTML;
 }
 
+// <br> cannot execute code, and it is the usual way to break a line inside a
+// GFM table cell. Wrapping that row in a code block splits the table.
+const BR_TAG = /<br\s*\/?>/gi;
+
 /**
  * Wraps HTML content in code blocks for safe display
  * @param content - The markdown content to process
@@ -48,8 +52,9 @@ export function wrapHTMLInCodeBlock(content: string): string {
       return line;
     }
 
-    // Only check for HTML in lines that are NOT inside code blocks
-    if (containsHTML(line)) {
+    // Only check for HTML in lines that are NOT inside code blocks.
+    // Bare <br> tags are ignored so table rows that use them stay intact.
+    if (containsHTML(line.replace(BR_TAG, ''))) {
       return `\`\`\`html\n${line}\n\`\`\``;
     }
 

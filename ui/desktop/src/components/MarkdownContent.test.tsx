@@ -288,6 +288,28 @@ console.log('Hello, World!');
         expect(screen.getByText('456')).toBeInTheDocument();
       });
     });
+
+    it('keeps <br> inside table cells as line breaks', async () => {
+      const content = `| 区域 | 说明 |
+| --- | --- |
+| 滨江区 | 每年最高<br>1亿元 |
+| 临平区 | 未披露总额 |`;
+
+      const { container } = renderWithIntl(<MarkdownContent content={content} />);
+
+      await waitFor(() => {
+        expect(container.querySelectorAll('table')).toHaveLength(1);
+        expect(container.querySelectorAll('tbody tr')).toHaveLength(2);
+        expect(container).toHaveTextContent('滨江区');
+        expect(container).toHaveTextContent('临平区');
+        expect(container).toHaveTextContent('每年最高');
+        expect(container).toHaveTextContent('1亿元');
+      });
+
+      const cell = container.querySelector('tbody tr td:nth-child(2)');
+      expect(cell?.querySelector('br')).toBeInTheDocument();
+      expect(container).not.toHaveTextContent('<br>');
+    });
   });
 
   describe('Error Handling', () => {
