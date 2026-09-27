@@ -31,6 +31,16 @@ function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+function desktopMatchesUpstream(desktopVersion, upstream) {
+  if (desktopVersion === upstream) {
+    return true;
+  }
+  const localRevision = new RegExp(
+    `^${upstream.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\+local\\.(\\d+)$`,
+  ).exec(desktopVersion);
+  return localRevision !== null && Number(localRevision[1]) >= 1;
+}
+
 function readCargoVersion() {
   const cargoToml = readFileSync(resolve(repositoryRoot, "Cargo.toml"), "utf8");
   const workspacePackage = cargoToml.match(
@@ -64,9 +74,9 @@ function checkVersions() {
   const errors = [];
   const desktop = readJson(resolve(uiDirectory, "desktop/package.json"));
 
-  if (desktop.version !== expectedVersion) {
+  if (!desktopMatchesUpstream(desktop.version, expectedVersion)) {
     errors.push(
-      `goose-app is ${desktop.version}; expected ${expectedVersion} from Cargo.toml`,
+      `goose-app is ${desktop.version}; expected ${expectedVersion} or ${expectedVersion}+local.N`,
     );
   }
 
