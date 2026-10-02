@@ -98,7 +98,6 @@ default = [
     "local-inference",
     "aws-providers",
     "telemetry",
-    "nostr",
     "otel",
     "rustls-tls",
     "live-voice",
@@ -109,7 +108,9 @@ default = [
     "platform-apps",
     "chat-recall",
     "acp-http",
+    "online-model-meta",
 ]
+online-model-meta = ["goose/online-model-meta"]
 roaming = ["dep:goose-roaming", "dep:qrcode", "dep:fs2", "dep:agent-client-protocol"]
 code-mode = ["goose/code-mode"]
 tree-sitter = ["goose/tree-sitter"]
@@ -120,7 +121,6 @@ cuda = ["goose/cuda", "local-inference"]
 vulkan = ["goose/vulkan", "local-inference"]
 mlx = ["goose/mlx", "local-inference"]
 telemetry = ["goose/telemetry"]
-nostr = ["goose/nostr"]
 otel = ["goose/otel"]
 system-keyring = ["goose/system-keyring"]
 update = ["dep:sigstore-verify", "dep:snap"]

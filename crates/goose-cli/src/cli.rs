@@ -34,7 +34,7 @@ use crate::commands::schedule::{
     handle_schedule_run_now, handle_schedule_services_status, handle_schedule_services_stop,
     handle_schedule_sessions,
 };
-use crate::commands::session::{handle_session_list, handle_session_remove};
+use crate::commands::session::{handle_session_list, handle_session_remove, handle_session_rename};
 use crate::commands::skills::handle_skills_list;
 use crate::recipes::extract_from_cli::extract_recipe_info_from_cli;
 use crate::recipes::recipe::{explain_recipe, render_recipe_as_yaml};
@@ -571,36 +571,17 @@ enum SessionCommand {
         #[arg(
             long = "format",
             value_name = "FORMAT",
-            help = "Output format (markdown, json, yaml)",
+            help = "Output format (markdown, json, yaml, html)",
             default_value = "markdown"
         )]
         format: String,
-
-        #[arg(
-            long = "nostr",
-            help = "Publish the JSON session export as an encrypted Nostr event and print a Goose share link"
-        )]
-        nostr: bool,
-
-        #[arg(
-            long = "relay",
-            value_name = "RELAY",
-            help = "Nostr relay URL to publish to (can be specified multiple times)",
-            action = clap::ArgAction::Append
-        )]
-        relays: Vec<String>,
     },
-    #[command(
-        about = "Import a session from JSON, a Claude Code / Codex / Pi .jsonl, or an encrypted Nostr share link"
-    )]
+    #[command(about = "Import a session from JSON or a Claude Code / Codex / Pi .jsonl")]
     Import {
         #[arg(
-            help = "Path to a goose session export, a Claude Code, Codex, or Pi .jsonl transcript, or a goose://sessions/nostr share link"
+            help = "Path to a goose session export, or a Claude Code, Codex, or Pi .jsonl transcript"
         )]
         input: String,
-
-        #[arg(long = "nostr", help = "Treat input as an encrypted Nostr share link")]
-        nostr: bool,
     },
     #[command(name = "diagnostics")]
     Diagnostics {
@@ -609,6 +590,19 @@ enum SessionCommand {
 
         #[arg(short = 'o', long)]
         output: Option<PathBuf>,
+    },
+    #[command(about = "Rename a session")]
+    Rename {
+        #[arg(
+            long = "session-id",
+            alias = "id",
+            value_name = "SESSION_ID",
+            help = "Session ID to rename (e.g., '20250921_143022'). If omitted, prompts interactively."
+        )]
+        session_id: Option<String>,
+
+        #[arg(short = 'n', long = "new-name", help = "New name for the session")]
+        new_name: String,
     },
 }
 
@@ -1948,8 +1942,6 @@ async fn handle_session_subcommand(command: SessionCommand) -> Result<()> {
             identifier,
             output,
             format,
-            nostr,
-            relays,
         } => {
             let session_manager = SessionManager::instance();
             let session_identifier = if let Some(id) = identifier {
@@ -1967,17 +1959,11 @@ async fn handle_session_subcommand(command: SessionCommand) -> Result<()> {
                     }
                 }
             };
-            crate::commands::session::handle_session_export(
-                session_identifier,
-                output,
-                format,
-                nostr,
-                relays,
-            )
-            .await?;
+            crate::commands::session::handle_session_export(session_identifier, output, format)
+                .await?;
         }
-        SessionCommand::Import { input, nostr } => {
-            crate::commands::session::handle_session_import(input, nostr).await?;
+        SessionCommand::Import { input } => {
+            crate::commands::session::handle_session_import(input).await?;
         }
         SessionCommand::Diagnostics { identifier, output } => {
             let session_manager = SessionManager::instance();
@@ -1997,6 +1983,28 @@ async fn handle_session_subcommand(command: SessionCommand) -> Result<()> {
                 }
             };
             crate::commands::session::handle_diagnostics(&session_id, output).await?;
+        }
+        SessionCommand::Rename {
+            session_id,
+            new_name,
+        } => {
+            let session_manager = SessionManager::instance();
+            let session_id = if let Some(id) = session_id {
+                id
+            } else {
+                match crate::commands::session::prompt_interactive_session_selection(
+                    &session_manager,
+                )
+                .await
+                {
+                    Ok(id) => id,
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        return Ok(());
+                    }
+                }
+            };
+            handle_session_rename(session_id, new_name).await?;
         }
     }
     Ok(())

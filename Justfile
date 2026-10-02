@@ -170,7 +170,7 @@ build-lean:
     cargo build -p goose --bin goose-acp \
       --profile lean \
       --no-default-features \
-      --features native-tls
+      --features native-tls,online-model-meta
 
 # Budgets are per-platform. ELF carries several MiB that Mach-O does not for the
 # same code: DWARF .eh_frame instead of compact unwind info, and a .rela.dyn
@@ -489,7 +489,8 @@ mcp-conformance version="2025-11-25" suite="all" conformance_version="0.2.0-alph
   if [ -n "{{baseline}}" ]; then
     baseline_args=(--expected-failures "{{baseline}}")
   fi
-  GOOSE_DISABLE_KEYRING=1 npx -y @modelcontextprotocol/conformance@{{conformance_version}} client --command "target/debug/mcp_conformance_driver" --spec-version "{{version}}" --suite "{{suite}}" ${baseline_args[@]+"${baseline_args[@]}"}
+  export GOOSE_BIN="$PWD/target/debug/goose"
+  GOOSE_DISABLE_KEYRING=1 npx -y @modelcontextprotocol/conformance@{{conformance_version}} client --command "$PWD/target/debug/mcp_conformance_driver" --spec-version "{{version}}" --suite "{{suite}}" ${baseline_args[@]+"${baseline_args[@]}"}
 
 build-test-tools:
   cargo build -p goose-test
