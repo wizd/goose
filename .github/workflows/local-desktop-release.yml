@@ -125,12 +125,21 @@ jobs:
           cp goose-aarch64-apple-darwin.tar.gz goose-cli-mac-arm64.tar.gz
           cp goose-x86_64-apple-darwin.tar.gz goose-cli-mac-x64.tar.gz
 
+      - name: Checkout service default files
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.bump-desktop-version.outputs.ref }}
+          path: source
+          sparse-checkout: distro/vcorp
+          sparse-checkout-cone-mode: true
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.bump-desktop-version.outputs.version }}
         run: |
           set -euo pipefail
+          notes="Local build ${VERSION}. Windows service defaults are attached as system-config.yaml and install-defaults.ps1. Keep both files in the same folder and run install-defaults.ps1 once. It writes the machine-wide Goose config at PROGRAMDATA/goose/config.yaml. App updates do not replace that file."
           gh release create "desktop-${VERSION}" \
             Goose-desktop-windows-x64.zip \
             Goose-desktop-mac-arm64.zip \
@@ -138,9 +147,11 @@ jobs:
             goose-cli-windows-x64.zip \
             goose-cli-mac-arm64.tar.gz \
             goose-cli-mac-x64.tar.gz \
+            source/distro/vcorp/system-config.yaml \
+            source/distro/vcorp/install-defaults.ps1 \
             --repo "${GITHUB_REPOSITORY}" \
             --title "${VERSION}" \
-            --notes "Local build ${VERSION}."
+            --notes "$notes"
 
       - name: Upload packages to the update server
         env:

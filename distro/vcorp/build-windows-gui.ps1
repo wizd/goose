@@ -30,6 +30,8 @@ if ($Clean) {
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
 Copy-Item -Force $gooseSrc (Join-Path $binDir "goose.exe")
 Copy-Item -Force (Join-Path $PSScriptRoot "init-config.yaml") (Join-Path $binDir "init-config.yaml")
+Copy-Item -Force (Join-Path $PSScriptRoot "system-config.yaml") (Join-Path $binDir "system-config.yaml")
+Copy-Item -Force (Join-Path $PSScriptRoot "install-defaults.ps1") (Join-Path $binDir "install-defaults.ps1")
 Write-Host "Staged $(Get-Item (Join-Path $binDir 'goose.exe') | Select-Object -ExpandProperty Length) byte goose.exe"
 
 $env:ELECTRON_PLATFORM = "win32"

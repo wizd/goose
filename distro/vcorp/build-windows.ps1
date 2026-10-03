@@ -50,10 +50,12 @@ try {
         & strip.exe $dst
     }
     Copy-Item -Force (Join-Path $PSScriptRoot "init-config.yaml") (Join-Path $out "init-config.yaml")
+    Copy-Item -Force (Join-Path $PSScriptRoot "system-config.yaml") (Join-Path $out "system-config.yaml")
+    Copy-Item -Force (Join-Path $PSScriptRoot "install-defaults.ps1") (Join-Path $out "install-defaults.ps1")
     Copy-Item -Force (Join-Path $PSScriptRoot "README.md") (Join-Path $out "README.md")
     $zip = Join-Path $out "goose-vcorp-windows-x86_64.zip"
     if (Test-Path $zip) { Remove-Item $zip -Force }
-    Compress-Archive -Path $dst, (Join-Path $out "init-config.yaml"), (Join-Path $out "README.md") -DestinationPath $zip -Force
+    Compress-Archive -Path $dst, (Join-Path $out "init-config.yaml"), (Join-Path $out "system-config.yaml"), (Join-Path $out "install-defaults.ps1"), (Join-Path $out "README.md") -DestinationPath $zip -Force
 
     Get-Item $dst | Format-List FullName, Length, LastWriteTime
     Write-Host "BUILD_OK"

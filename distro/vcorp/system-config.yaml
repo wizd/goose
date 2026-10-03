@@ -1,0 +1,15 @@
+# Machine-wide defaults for VCorp media services.
+# install-defaults.ps1 copies this file to %PROGRAMDATA%\goose\config.yaml.
+# Goose reads that file before the user config, so a choice saved in Settings wins.
+# Chat is intentionally omitted: it would override Switch models.
+# Realtime voice and video are not connected yet.
+GOOSE_SERVICE_VISION_PROVIDER: vcorp
+GOOSE_SERVICE_VISION_MODEL: google/gemini-3.8-flash
+GOOSE_SERVICE_STT_PROVIDER: vcorp
+GOOSE_SERVICE_STT_MODEL: vcorp/generic-asr
+GOOSE_SERVICE_TTS_PROVIDER: vcorp
+GOOSE_SERVICE_TTS_MODEL: vcorp/generic-tts
+GOOSE_SERVICE_EMBEDDING_PROVIDER: vcorp
+GOOSE_SERVICE_EMBEDDING_MODEL: qwen/Qwen3-VL-Embedding-8B
+GOOSE_SERVICE_IMAGE_PROVIDER: vcorp
+GOOSE_SERVICE_IMAGE_MODEL: google/gemini-3.1-flash-image

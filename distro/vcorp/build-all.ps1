@@ -28,7 +28,7 @@ try {
                 Remove-Item -LiteralPath $path -Recurse -Force
             }
         }
-        foreach ($name in @("goose.exe", "init-config.yaml")) {
+        foreach ($name in @("goose.exe", "init-config.yaml", "system-config.yaml", "install-defaults.ps1")) {
             $staged = Join-Path $desktop "src\bin\$name"
             if (Test-Path $staged) {
                 Write-Host "Removing $staged"
