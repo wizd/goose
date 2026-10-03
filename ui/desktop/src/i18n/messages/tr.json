@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Yükle ve Yeniden Başlat"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Güncelleme yükleniyor..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "En son sürümü çalıştırıyorsunuz!"
   },

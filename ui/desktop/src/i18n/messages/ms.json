@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Pasang & Mula Semula"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Memasang kemas kini..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "Anda sedang menjalankan versi terkini!"
   },

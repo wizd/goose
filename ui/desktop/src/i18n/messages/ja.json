@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "インストールして再起動"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "アップデートをインストールしています..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "最新バージョンを使用しています！"
   },

@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "स्थापित करें और पुनः प्रारंभ करें"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "अपडेट इंस्टॉल हो रहा है..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "आप नवीनतम संस्करण चला रहे हैं!"
   },

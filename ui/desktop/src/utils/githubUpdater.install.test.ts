@@ -251,7 +251,17 @@ describe('prepareUpdateInstall', () => {
     // Deleting the extracted payload makes the copy step fail, exercising the rollback path.
     await fs.rm(path.join(stagingDir, 'extracted'), { recursive: true, force: true });
 
-    launchSwapScript(swap);
+    const previousDialog = process.env.GOOSE_UPDATE_SUPPRESS_FAILURE_DIALOG;
+    process.env.GOOSE_UPDATE_SUPPRESS_FAILURE_DIALOG = '1';
+    try {
+      launchSwapScript(swap);
+    } finally {
+      if (previousDialog === undefined) {
+        delete process.env.GOOSE_UPDATE_SUPPRESS_FAILURE_DIALOG;
+      } else {
+        process.env.GOOSE_UPDATE_SUPPRESS_FAILURE_DIALOG = previousDialog;
+      }
+    }
 
     // The restored app is relaunched at the end of the swap, so the marker proves the script
     // ran to completion rather than merely that the rollback has not happened yet.

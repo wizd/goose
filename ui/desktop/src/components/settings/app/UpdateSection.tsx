@@ -51,6 +51,10 @@ const i18n = defineMessages({
     id: 'updateSection.installAndRestart',
     defaultMessage: 'Install & Restart',
   },
+  installingUpdate: {
+    id: 'updateSection.installingUpdate',
+    defaultMessage: 'Installing update...',
+  },
   checking: {
     id: 'updateSection.checking',
     defaultMessage: 'Checking for updates...',
@@ -87,13 +91,7 @@ const i18n = defineMessages({
 });
 
 type UpdateStatus =
-  | 'idle'
-  | 'checking'
-  | 'downloading'
-  | 'installing'
-  | 'success'
-  | 'error'
-  | 'ready';
+  'idle' | 'checking' | 'downloading' | 'installing' | 'success' | 'error' | 'ready';
 
 interface UpdateInfo {
   currentVersion: string;
@@ -115,6 +113,7 @@ export default function UpdateSection() {
   });
   const [progress, setProgress] = useState<number>(0);
   const [disableAutoDownload, setDisableAutoDownload] = useState<boolean>(false);
+  const [updateReady, setUpdateReady] = useState(false);
   const [autoDownloadForcedByEnv, setAutoDownloadForcedByEnv] = useState<boolean>(false);
   const progressTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProgressRef = React.useRef<number>(0);
@@ -186,6 +185,7 @@ export default function UpdateSection() {
         }
 
         case 'update-downloaded':
+          setUpdateReady(true);
           setUpdateStatus('ready');
           setProgress(100);
           break;
@@ -235,8 +235,20 @@ export default function UpdateSection() {
     }
   };
 
-  const installUpdate = () => {
-    window.electron.installUpdate();
+  const installUpdate = async () => {
+    setUpdateStatus('installing');
+    try {
+      const result = await window.electron.installUpdate();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to install update');
+      }
+    } catch (error) {
+      setUpdateInfo((prev) => ({
+        ...prev,
+        error: errorMessage(error, 'Failed to install update'),
+      }));
+      setUpdateStatus('error');
+    }
   };
 
   const downloadUpdate = async () => {
@@ -269,6 +281,8 @@ export default function UpdateSection() {
         return intl.formatMessage(i18n.checking);
       case 'downloading':
         return intl.formatMessage(i18n.downloadingProgress, { percent: Math.round(progress) });
+      case 'installing':
+        return intl.formatMessage(i18n.installingUpdate);
       case 'ready':
         return intl.formatMessage(i18n.downloadReady);
       case 'success':
@@ -289,6 +303,7 @@ export default function UpdateSection() {
     switch (updateStatus) {
       case 'checking':
       case 'downloading':
+      case 'installing':
         return <Loader2 className="w-4 h-4 animate-spin" />;
       case 'success':
         return <CheckCircle className="w-4 h-4 text-green-500" />;
@@ -344,15 +359,29 @@ export default function UpdateSection() {
               </Button>
             )}
 
-          {updateStatus === 'ready' && (
-            <Button onClick={installUpdate} variant="default" size="sm">
-              {intl.formatMessage(i18n.installAndRestart)}
+          {(updateStatus === 'ready' ||
+            updateStatus === 'installing' ||
+            (updateStatus === 'error' && updateReady)) && (
+            <Button
+              onClick={installUpdate}
+              disabled={updateStatus === 'installing'}
+              variant="default"
+              size="sm"
+            >
+              {updateStatus === 'installing' && <Loader2 className="w-4 h-4 animate-spin" />}
+              {intl.formatMessage(
+                updateStatus === 'installing' ? i18n.installingUpdate : i18n.installAndRestart
+              )}
             </Button>
           )}
         </div>
 
         {getStatusMessage() && (
-          <div className="flex items-center gap-2 text-xs text-text-secondary">
+          <div
+            className={`flex items-center gap-2 text-xs ${
+              updateStatus === 'error' ? 'text-red-600 dark:text-red-400' : 'text-text-secondary'
+            }`}
+          >
             {getStatusIcon()}
             <span>{getStatusMessage()}</span>
           </div>

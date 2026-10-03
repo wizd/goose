@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Установить и перезапустить"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Установка обновления..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "У вас установлена последняя версия!"
   },

@@ -4625,6 +4625,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "安装并重启"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "正在安装更新…"
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "你已是最新版本！"
   },

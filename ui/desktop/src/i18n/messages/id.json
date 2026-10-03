@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Instal & Mulai Ulang"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Menginstal pembaruan..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "Anda menjalankan versi terbaru!"
   },

@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Installa e riavvia"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Installazione dell'aggiornamento..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "Stai usando la versione più recente!"
   },

@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "Cài đặt & khởi động lại"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "Đang cài đặt bản cập nhật..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "Bạn đang chạy phiên bản mới nhất!"
   },

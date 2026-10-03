@@ -4559,6 +4559,9 @@
   "updateSection.installAndRestart": {
     "defaultMessage": "설치 및 다시 시작"
   },
+  "updateSection.installingUpdate": {
+    "defaultMessage": "업데이트를 설치하는 중..."
+  },
   "updateSection.latestVersion": {
     "defaultMessage": "최신 버전을 사용 중입니다!"
   },
