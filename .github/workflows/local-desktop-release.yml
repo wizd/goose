@@ -42,20 +42,27 @@ jobs:
           const text = readFileSync(path, "utf8");
           const updated = text.replace(/"version": "[^"]+"/, `"version": "${version}"`);
           if (updated === text) {
-            throw new Error(`desktop package.json has no version field to set to ${version}`);
+            if (!text.includes(`"version": "${version}"`)) {
+              throw new Error(`desktop package.json has no version field to set to ${version}`);
+            }
+            process.exit(0);
           }
           writeFileSync(path, updated);
           EOF
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ui/desktop/package.json
-          git commit -m "chore(desktop): release ${version}"
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
-            target_branch=my-dev
+          if git diff --quiet -- ui/desktop/package.json; then
+            echo "Desktop version is already ${version}"
           else
-            target_branch="${GITHUB_REF_NAME}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ui/desktop/package.json
+            git commit -m "chore(desktop): release ${version}"
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              target_branch=my-dev
+            else
+              target_branch="${GITHUB_REF_NAME}"
+            fi
+            git push origin "HEAD:${target_branch}"
           fi
-          git push origin "HEAD:${target_branch}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "ref=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
@@ -137,6 +144,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.bump-desktop-version.outputs.version }}
+          RELEASE_TARGET: ${{ needs.bump-desktop-version.outputs.ref }}
         run: |
           set -euo pipefail
           notes="Local build ${VERSION}. Windows service defaults are attached as system-config.yaml and install-defaults.ps1. Keep both files in the same folder and run install-defaults.ps1 once. It writes the machine-wide Goose config at PROGRAMDATA/goose/config.yaml. App updates do not replace that file."
@@ -150,6 +158,7 @@ jobs:
             source/distro/vcorp/system-config.yaml \
             source/distro/vcorp/install-defaults.ps1 \
             --repo "${GITHUB_REPOSITORY}" \
+            --target "$RELEASE_TARGET" \
             --title "${VERSION}" \
             --notes "$notes"
 

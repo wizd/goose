@@ -22,12 +22,18 @@ export function upstreamVersion(version) {
   return normalizeReleaseVersion(version).replace(localBuildPattern, "");
 }
 
-export function nextDesktopVersion(upstream, versions) {
+export function nextDesktopVersion(upstream, versions, desktopVersion = "") {
   const base = upstreamVersion(upstream);
-  const maxBuild = versions.reduce(
+  const publishedMax = versions.reduce(
     (max, version) => Math.max(max, localBuildNumber(version)),
     0,
   );
+  const prepared = normalizeReleaseVersion(desktopVersion);
+  const preparedNumber = localBuildNumber(prepared);
+  if (upstreamVersion(prepared) === base && preparedNumber === publishedMax + 1) {
+    return prepared;
+  }
+  const maxBuild = Math.max(publishedMax, preparedNumber);
   return `${base}+local.${maxBuild + 1}`;
 }
 
@@ -45,16 +51,17 @@ const isDirectRun =
 
 if (isDirectRun) {
   const upstream = readArg("--upstream");
-  const versions = [];
   const desktopIndex = process.argv.indexOf("--desktop");
-  if (desktopIndex !== -1 && process.argv[desktopIndex + 1]) {
-    versions.push(process.argv[desktopIndex + 1]);
-  }
+  const desktop =
+    desktopIndex !== -1 && process.argv[desktopIndex + 1]
+      ? process.argv[desktopIndex + 1]
+      : "";
+  const versions = [];
   const tagsIndex = process.argv.indexOf("--tags");
   if (tagsIndex !== -1 && process.argv[tagsIndex + 1]) {
     versions.push(
       ...process.argv[tagsIndex + 1].split(/\s+/).filter((tag) => tag.length > 0),
     );
   }
-  process.stdout.write(`${nextDesktopVersion(upstream, versions)}\n`);
+  process.stdout.write(`${nextDesktopVersion(upstream, versions, desktop)}\n`);
 }
