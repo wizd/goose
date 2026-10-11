@@ -1709,6 +1709,40 @@ pub struct ProviderReadinessCheckResponse {
     pub error: Option<String>,
 }
 
+/// Probe one configured service with the provider and model currently selected
+/// in the UI, without reading the saved service configuration.
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
+#[request(
+    method = "_goose/unstable/services/verify",
+    response = ServiceVerifyResponse
+)]
+#[serde(rename_all = "camelCase")]
+pub struct ServiceVerifyRequest {
+    pub service: String,
+    pub provider_id: String,
+    pub model: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct ServiceVerifyAudio {
+    pub data: String,
+    pub mime_type: String,
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcResponse)]
+#[serde(rename_all = "camelCase")]
+pub struct ServiceVerifyResponse {
+    pub ok: bool,
+    pub latency_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub audio: Option<ServiceVerifyAudio>,
+}
+
 /// List the raw model identifiers returned by a provider's live supported-models API.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(

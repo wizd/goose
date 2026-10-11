@@ -911,6 +911,9 @@
   "dictationSettings.updateApiKey": {
     "defaultMessage": "Kemas Kini Kunci API"
   },
+  "dictationSettings.useServiceConfig": {
+    "defaultMessage": "Use service configuration"
+  },
   "dictationSettings.voiceDictationProvider": {
     "defaultMessage": "Pembekal Imlak Suara"
   },
@@ -3718,6 +3721,102 @@
   },
   "securityToggle.warpNotice": {
     "defaultMessage": "Pengesanan suntikan arahan berfungsi paling baik apabila disambungkan ke WARP (diperlukan untuk mencapai perkhidmatan pengelasan)."
+  },
+  "serviceSettings.chatDescription": {
+    "defaultMessage": "The model used for conversation. This is the same choice as Switch models."
+  },
+  "serviceSettings.chatName": {
+    "defaultMessage": "Chat"
+  },
+  "serviceSettings.description": {
+    "defaultMessage": "Choose a provider and model for each service. The agent uses these when it needs that capability."
+  },
+  "serviceSettings.embeddingDescription": {
+    "defaultMessage": "Turns text into vectors through the embed_text tool."
+  },
+  "serviceSettings.embeddingName": {
+    "defaultMessage": "Embeddings"
+  },
+  "serviceSettings.imageDescription": {
+    "defaultMessage": "Draws images through the generate_image tool."
+  },
+  "serviceSettings.imageName": {
+    "defaultMessage": "Image generation"
+  },
+  "serviceSettings.modelPlaceholder": {
+    "defaultMessage": "Model"
+  },
+  "serviceSettings.notWired": {
+    "defaultMessage": "Not connected yet"
+  },
+  "serviceSettings.providerPlaceholder": {
+    "defaultMessage": "Provider"
+  },
+  "serviceSettings.realtimeDescription": {
+    "defaultMessage": "Saved for a later realtime voice provider. Goose does not call it yet."
+  },
+  "serviceSettings.realtimeName": {
+    "defaultMessage": "Realtime voice"
+  },
+  "serviceSettings.sttDescription": {
+    "defaultMessage": "Transcription used when dictation is set to the service configuration."
+  },
+  "serviceSettings.sttName": {
+    "defaultMessage": "Speech to text"
+  },
+  "serviceSettings.title": {
+    "defaultMessage": "Services"
+  },
+  "serviceSettings.ttsDescription": {
+    "defaultMessage": "Speaks text through the text_to_speech tool."
+  },
+  "serviceSettings.ttsName": {
+    "defaultMessage": "Text to speech"
+  },
+  "serviceSettings.verify": {
+    "defaultMessage": "Verify"
+  },
+  "serviceSettings.verifyAudioBytes": {
+    "defaultMessage": "{count} bytes"
+  },
+  "serviceSettings.verifyDimensions": {
+    "defaultMessage": "{count} dimensions"
+  },
+  "serviceSettings.verifyFailed": {
+    "defaultMessage": "Unavailable · {error}"
+  },
+  "serviceSettings.verifyModelNotListed": {
+    "defaultMessage": "Endpoint reachable, but this model was not in the model list"
+  },
+  "serviceSettings.verifyOk": {
+    "defaultMessage": "Available · {latency} ms"
+  },
+  "serviceSettings.verifyPlay": {
+    "defaultMessage": "Play"
+  },
+  "serviceSettings.verifyReply": {
+    "defaultMessage": "Reply: {text}"
+  },
+  "serviceSettings.verifyTranscript": {
+    "defaultMessage": "Transcript: {text}"
+  },
+  "serviceSettings.verifyUnknown": {
+    "defaultMessage": "Verification failed"
+  },
+  "serviceSettings.verifying": {
+    "defaultMessage": "Verifying"
+  },
+  "serviceSettings.videoDescription": {
+    "defaultMessage": "Saved for a later video service. Goose does not call it yet."
+  },
+  "serviceSettings.videoName": {
+    "defaultMessage": "Video"
+  },
+  "serviceSettings.visionDescription": {
+    "defaultMessage": "Describes images through describe_image when the chat model cannot see them."
+  },
+  "serviceSettings.visionName": {
+    "defaultMessage": "Vision"
   },
   "sessionActionsHeader.actionsLabel": {
     "defaultMessage": "Tindakan sesi"

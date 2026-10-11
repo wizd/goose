@@ -901,6 +901,29 @@ export const zProviderReadinessCheckResponse_unstable = z.object({
 });
 
 /**
+ * Probe one configured service with the provider and model currently selected
+ * in the UI, without reading the saved service configuration.
+ */
+export const zServiceVerifyRequest_unstable = z.object({
+    service: z.string(),
+    providerId: z.string(),
+    model: z.string()
+});
+
+export const zServiceVerifyAudio = z.object({
+    data: z.string(),
+    mimeType: z.string()
+});
+
+export const zServiceVerifyResponse_unstable = z.object({
+    ok: z.boolean(),
+    latencyMs: z.int().gte(0),
+    detail: z.string().nullish(),
+    error: z.string().nullish(),
+    audio: zServiceVerifyAudio.nullish()
+});
+
+/**
  * Read saved configuration field values for one provider.
  */
 export const zProviderConfigReadRequest_unstable = z.object({
@@ -2344,6 +2367,7 @@ export const zExtRequest = z.object({
             zCustomProviderDeleteRequest_unstable,
             zRefreshProviderInventoryRequest_unstable,
             zProviderReadinessCheckRequest_unstable,
+            zServiceVerifyRequest_unstable,
             zProviderConfigReadRequest_unstable,
             zProviderConfigStatusRequest_unstable,
             zProviderConfigSaveRequest_unstable,
@@ -2456,6 +2480,7 @@ export const zExtResponse = z.union([
                 zCustomProviderDeleteResponse_unstable,
                 zRefreshProviderInventoryResponse_unstable,
                 zProviderReadinessCheckResponse_unstable,
+                zServiceVerifyResponse_unstable,
                 zProviderConfigReadResponse_unstable,
                 zProviderConfigStatusResponse_unstable,
                 zProviderConfigChangeResponse_unstable,

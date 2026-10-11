@@ -3821,6 +3821,39 @@
   "serviceSettings.ttsName": {
     "defaultMessage": "Text to speech"
   },
+  "serviceSettings.verify": {
+    "defaultMessage": "Verify"
+  },
+  "serviceSettings.verifyAudioBytes": {
+    "defaultMessage": "{count} bytes"
+  },
+  "serviceSettings.verifyDimensions": {
+    "defaultMessage": "{count} dimensions"
+  },
+  "serviceSettings.verifyFailed": {
+    "defaultMessage": "Unavailable · {error}"
+  },
+  "serviceSettings.verifyModelNotListed": {
+    "defaultMessage": "Endpoint reachable, but this model was not in the model list"
+  },
+  "serviceSettings.verifyOk": {
+    "defaultMessage": "Available · {latency} ms"
+  },
+  "serviceSettings.verifyPlay": {
+    "defaultMessage": "Play"
+  },
+  "serviceSettings.verifyReply": {
+    "defaultMessage": "Reply: {text}"
+  },
+  "serviceSettings.verifyTranscript": {
+    "defaultMessage": "Transcript: {text}"
+  },
+  "serviceSettings.verifyUnknown": {
+    "defaultMessage": "Verification failed"
+  },
+  "serviceSettings.verifying": {
+    "defaultMessage": "Verifying"
+  },
   "serviceSettings.videoDescription": {
     "defaultMessage": "Saved for a later video service. Goose does not call it yet."
   },

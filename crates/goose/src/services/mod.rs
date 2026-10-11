@@ -1,5 +1,6 @@
 mod client;
 mod endpoint;
+mod verify;
 
 pub use client::{
     embed_text, generate_image, speech, transcribe_audio, transcribe_configured, vision_chat,
@@ -8,6 +9,10 @@ pub use endpoint::{
     normalize_openrouter_base_url, request_target, resolve_endpoint, strip_openai_endpoint_suffix,
     OpenAiCompatEndpoint,
 };
+pub use verify::{
+    check_models, image_list_notice, listed_model_ids, red_png, silent_wav, MODEL_NOT_LISTED,
+};
+pub(crate) use verify::{preview, verify_media, VerifyMediaOutput};
 
 use crate::config::Config;
 
@@ -34,6 +39,20 @@ impl ServiceKind {
             Self::Embedding => "EMBEDDING",
             Self::Image => "IMAGE",
             Self::Video => "VIDEO",
+        }
+    }
+
+    /// Services the settings page can probe. Realtime voice and video only
+    /// store configuration, so they are not verifiable yet.
+    pub fn from_verify_name(name: &str) -> Option<Self> {
+        match name {
+            "chat" => Some(Self::Chat),
+            "vision" => Some(Self::Vision),
+            "stt" => Some(Self::Stt),
+            "tts" => Some(Self::Tts),
+            "embedding" => Some(Self::Embedding),
+            "image" => Some(Self::Image),
+            _ => None,
         }
     }
 

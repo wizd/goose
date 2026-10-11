@@ -210,6 +210,35 @@ export async function acpListSupportedModels(providerId: string): Promise<string
   return models;
 }
 
+export type ServiceVerifyAudio = {
+  data: string;
+  mimeType: string;
+};
+
+export type ServiceVerifyResult = {
+  ok: boolean;
+  latencyMs: number;
+  detail: string | null;
+  error: string | null;
+  audio: ServiceVerifyAudio | null;
+};
+
+export async function acpVerifyService(
+  service: string,
+  providerId: string,
+  model: string
+): Promise<ServiceVerifyResult> {
+  const client = await getAcpClient();
+  const response = await client.goose.servicesVerify_unstable({ service, providerId, model });
+  return {
+    ok: response.ok,
+    latencyMs: response.latencyMs,
+    detail: response.detail ?? null,
+    error: response.error ?? null,
+    audio: response.audio ? { data: response.audio.data, mimeType: response.audio.mimeType } : null,
+  };
+}
+
 export async function acpListProviderCatalogEntries(
   format?: string
 ): Promise<ProviderTemplateCatalogEntryDto[]> {

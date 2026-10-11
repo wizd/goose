@@ -2804,6 +2804,83 @@
       "x-side": "agent",
       "x-method": "_goose/unstable/providers/readiness/check"
     },
+    "ServiceVerifyRequest_unstable": {
+      "type": "object",
+      "properties": {
+        "service": {
+          "type": "string"
+        },
+        "providerId": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "service",
+        "providerId",
+        "model"
+      ],
+      "description": "Probe one configured service with the provider and model currently selected\nin the UI, without reading the saved service configuration.",
+      "x-side": "agent",
+      "x-method": "_goose/unstable/services/verify"
+    },
+    "ServiceVerifyResponse_unstable": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        },
+        "latencyMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "audio": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ServiceVerifyAudio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ok",
+        "latencyMs"
+      ],
+      "x-side": "agent",
+      "x-method": "_goose/unstable/services/verify"
+    },
+    "ServiceVerifyAudio": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
+        },
+        "mimeType": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "data",
+        "mimeType"
+      ]
+    },
     "ProviderConfigReadRequest_unstable": {
       "type": "object",
       "properties": {
@@ -5518,7 +5595,7 @@
         },
         "provider": {
           "type": "string",
-          "description": "Provider to use: \"openai\", \"groq\", \"elevenlabs\", or \"local\""
+          "description": "Provider to use: \"openai\", \"groq\", \"elevenlabs\", \"model\", \"service\", or \"local\""
         }
       },
       "required": [
@@ -7395,6 +7472,15 @@
                 {
                   "allOf": [
                     {
+                      "$ref": "#/$defs/ServiceVerifyRequest_unstable"
+                    }
+                  ],
+                  "description": "Params for _goose/unstable/services/verify",
+                  "title": "ServiceVerifyRequest_unstable"
+                },
+                {
+                  "allOf": [
+                    {
                       "$ref": "#/$defs/ProviderConfigReadRequest_unstable"
                     }
                   ],
@@ -8310,6 +8396,14 @@
                         }
                       ],
                       "title": "ProviderReadinessCheckResponse_unstable"
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/ServiceVerifyResponse_unstable"
+                        }
+                      ],
+                      "title": "ServiceVerifyResponse_unstable"
                     },
                     {
                       "allOf": [

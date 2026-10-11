@@ -1,13 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Check, Loader2 } from 'lucide-react';
+import type { IntlShape } from 'react-intl';
 import CreatableSelect from 'react-select/creatable';
 import {
   acpClearDefaults,
   acpListProviderDetails,
   acpListSupportedModels,
   acpReadDefaults,
+  acpVerifyService,
+  type ServiceVerifyAudio,
 } from '../../../acp/providers';
 import { useConfig } from '../../ConfigContext';
 import { useModelAndProvider } from '../../ModelAndProviderContext';
+import { Button } from '../../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import { Select } from '../../ui/Select';
 import { defineMessages, useIntl } from '../../../i18n';
@@ -65,6 +70,38 @@ const i18n = defineMessages({
     id: 'serviceSettings.videoDescription',
     defaultMessage: 'Saved for a later video service. Goose does not call it yet.',
   },
+  verify: { id: 'serviceSettings.verify', defaultMessage: 'Verify' },
+  verifying: { id: 'serviceSettings.verifying', defaultMessage: 'Verifying' },
+  verifyOk: {
+    id: 'serviceSettings.verifyOk',
+    defaultMessage: 'Available · {latency} ms',
+  },
+  verifyFailed: {
+    id: 'serviceSettings.verifyFailed',
+    defaultMessage: 'Unavailable · {error}',
+  },
+  verifyPlay: { id: 'serviceSettings.verifyPlay', defaultMessage: 'Play' },
+  verifyModelNotListed: {
+    id: 'serviceSettings.verifyModelNotListed',
+    defaultMessage: 'Endpoint reachable, but this model was not in the model list',
+  },
+  verifyReply: { id: 'serviceSettings.verifyReply', defaultMessage: 'Reply: {text}' },
+  verifyTranscript: {
+    id: 'serviceSettings.verifyTranscript',
+    defaultMessage: 'Transcript: {text}',
+  },
+  verifyDimensions: {
+    id: 'serviceSettings.verifyDimensions',
+    defaultMessage: '{count} dimensions',
+  },
+  verifyAudioBytes: {
+    id: 'serviceSettings.verifyAudioBytes',
+    defaultMessage: '{count} bytes',
+  },
+  verifyUnknown: {
+    id: 'serviceSettings.verifyUnknown',
+    defaultMessage: 'Verification failed',
+  },
 });
 
 type ServiceId = 'chat' | 'vision' | 'stt' | 'realtime' | 'tts' | 'embedding' | 'image' | 'video';
@@ -87,6 +124,80 @@ const SERVICES: Array<{
 
 type Option = { value: string; label: string };
 type Selection = { provider: string | null; model: string | null };
+
+type VerifyState =
+  | { status: 'idle' }
+  | { status: 'running' }
+  | {
+      status: 'ok';
+      latencyMs: number;
+      detail: string | null;
+      audio: ServiceVerifyAudio | null;
+    }
+  | { status: 'failed'; error: string };
+
+const idleVerify: VerifyState = { status: 'idle' };
+
+function emptyVerifies(): Record<ServiceId, VerifyState> {
+  return Object.fromEntries(SERVICES.map((service) => [service.id, idleVerify])) as Record<
+    ServiceId,
+    VerifyState
+  >;
+}
+
+function verifyExtra(intl: IntlShape, service: ServiceId, detail: string | null): string | null {
+  if (!detail) return null;
+  if (service === 'image') {
+    return detail === 'model_not_listed' ? intl.formatMessage(i18n.verifyModelNotListed) : detail;
+  }
+  if (service === 'embedding') {
+    return intl.formatMessage(i18n.verifyDimensions, { count: detail });
+  }
+  if (service === 'tts') {
+    return intl.formatMessage(i18n.verifyAudioBytes, { count: detail });
+  }
+  if (service === 'stt') {
+    return intl.formatMessage(i18n.verifyTranscript, { text: detail });
+  }
+  return intl.formatMessage(i18n.verifyReply, { text: detail });
+}
+
+function playAudio(audio: ServiceVerifyAudio) {
+  const element = new window.Audio(`data:${audio.mimeType};base64,${audio.data}`);
+  void element.play();
+}
+
+function VerifyResult({ service, state }: { service: ServiceId; state: VerifyState }) {
+  const intl = useIntl();
+  if (state.status === 'ok') {
+    const extra = verifyExtra(intl, service, state.detail);
+    const summary = intl.formatMessage(i18n.verifyOk, { latency: state.latencyMs });
+    const text = extra ? `${summary} · ${extra}` : summary;
+    const audio = state.audio;
+    return (
+      <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-green-600 dark:text-green-400">
+        <Check className="h-3 w-3 shrink-0" />
+        <span className="truncate" title={text}>
+          {text}
+        </span>
+        {audio && (
+          <button type="button" className="shrink-0 underline" onClick={() => playAudio(audio)}>
+            {intl.formatMessage(i18n.verifyPlay)}
+          </button>
+        )}
+      </p>
+    );
+  }
+  if (state.status === 'failed') {
+    const text = intl.formatMessage(i18n.verifyFailed, { error: state.error });
+    return (
+      <p className="mt-1 truncate text-xs text-red-600 dark:text-red-400" title={text}>
+        {text}
+      </p>
+    );
+  }
+  return null;
+}
 
 function providerKey(id: ServiceId) {
   return `GOOSE_SERVICE_${id.toUpperCase()}_PROVIDER`;
@@ -123,13 +234,15 @@ export default function ServicesSection() {
   const { read, upsert, remove } = useConfig();
   const { changeModel, refreshCurrentModelAndProvider } = useModelAndProvider();
   const [providers, setProviders] = useState<Option[]>([]);
-  const [selections, setSelections] = useState<Record<ServiceId, Selection>>(() =>
-    Object.fromEntries(SERVICES.map((service) => [service.id, { provider: null, model: null }])) as Record<
-      ServiceId,
-      Selection
-    >
+  const [selections, setSelections] = useState<Record<ServiceId, Selection>>(
+    () =>
+      Object.fromEntries(
+        SERVICES.map((service) => [service.id, { provider: null, model: null }])
+      ) as Record<ServiceId, Selection>
   );
   const [modelsByProvider, setModelsByProvider] = useState<Record<string, Option[]>>({});
+  const [verifies, setVerifies] = useState<Record<ServiceId, VerifyState>>(emptyVerifies);
+  const verifyGeneration = useRef<Partial<Record<ServiceId, number>>>({});
 
   const loadModels = useCallback(async (providerId: string) => {
     if (!providerId) return;
@@ -184,7 +297,43 @@ export default function ServicesSection() {
     load().catch((error) => console.error('Failed to load service settings', error));
   }, [load]);
 
+  const clearVerify = (id: ServiceId) => {
+    verifyGeneration.current[id] = (verifyGeneration.current[id] ?? 0) + 1;
+    setVerifies((current) => ({ ...current, [id]: idleVerify }));
+  };
+
+  const verify = async (id: ServiceId) => {
+    const selection = selections[id];
+    if (!selection.provider || !selection.model) return;
+    const generation = (verifyGeneration.current[id] ?? 0) + 1;
+    verifyGeneration.current[id] = generation;
+    setVerifies((current) => ({ ...current, [id]: { status: 'running' } }));
+    try {
+      const result = await acpVerifyService(id, selection.provider, selection.model);
+      if (verifyGeneration.current[id] !== generation) return;
+      setVerifies((current) => ({
+        ...current,
+        [id]: result.ok
+          ? {
+              status: 'ok',
+              latencyMs: result.latencyMs,
+              detail: result.detail,
+              audio: result.audio,
+            }
+          : {
+              status: 'failed',
+              error: result.error ?? intl.formatMessage(i18n.verifyUnknown),
+            },
+      }));
+    } catch (error) {
+      if (verifyGeneration.current[id] !== generation) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setVerifies((current) => ({ ...current, [id]: { status: 'failed', error: message } }));
+    }
+  };
+
   const saveService = async (id: ServiceId, selection: Selection) => {
+    clearVerify(id);
     setSelections((current) => ({ ...current, [id]: selection }));
     if (id === 'chat') {
       if (selection.provider && selection.model) {
@@ -234,13 +383,14 @@ export default function ServicesSection() {
       <CardContent className="px-4 space-y-3">
         {SERVICES.map((service) => {
           const selection = selections[service.id];
-          const providerValue = providers.find((option) => option.value === selection.provider) ?? null;
+          const providerValue =
+            providers.find((option) => option.value === selection.provider) ?? null;
           return (
             <div
               key={service.id}
-              className="grid grid-cols-1 items-center gap-2 border-b border-border-primary py-3 last:border-b-0 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)]"
+              className="grid grid-cols-1 items-center gap-2 border-b border-border-primary py-3 last:border-b-0 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
             >
-              <div>
+              <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm text-text-primary">
                     {intl.formatMessage(i18n[service.name])}
@@ -254,6 +404,7 @@ export default function ServicesSection() {
                 <p className="text-xs text-text-secondary">
                   {intl.formatMessage(i18n[service.description])}
                 </p>
+                <VerifyResult service={service.id} state={verifies[service.id]} />
               </div>
               <Select
                 inputId={`${service.id}-provider`}
@@ -280,9 +431,7 @@ export default function ServicesSection() {
                 aria-label={`${intl.formatMessage(i18n[service.name])} ${intl.formatMessage(i18n.modelPlaceholder)}`}
                 classNames={modelSelectClassNames}
                 options={modelOptions(selection)}
-                value={
-                  selection.model ? { value: selection.model, label: selection.model } : null
-                }
+                value={selection.model ? { value: selection.model, label: selection.model } : null}
                 placeholder={intl.formatMessage(i18n.modelPlaceholder)}
                 isClearable
                 isDisabled={!selection.provider}
@@ -294,6 +443,34 @@ export default function ServicesSection() {
                   }).catch((error) => console.error(`Failed to save ${service.id} model`, error));
                 }}
               />
+              {service.wired ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="justify-self-start"
+                  aria-label={`${intl.formatMessage(i18n[service.name])} ${intl.formatMessage(i18n.verify)}`}
+                  disabled={
+                    !selection.provider ||
+                    !selection.model ||
+                    verifies[service.id].status === 'running'
+                  }
+                  onClick={() => {
+                    verify(service.id).catch((error) =>
+                      console.error(`Failed to verify ${service.id}`, error)
+                    );
+                  }}
+                >
+                  {verifies[service.id].status === 'running' && (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  )}
+                  {intl.formatMessage(
+                    verifies[service.id].status === 'running' ? i18n.verifying : i18n.verify
+                  )}
+                </Button>
+              ) : (
+                <div />
+              )}
             </div>
           );
         })}

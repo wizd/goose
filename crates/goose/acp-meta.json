@@ -186,6 +186,11 @@
       "responseType": "ProviderReadinessCheckResponse_unstable"
     },
     {
+      "method": "_goose/unstable/services/verify",
+      "requestType": "ServiceVerifyRequest_unstable",
+      "responseType": "ServiceVerifyResponse_unstable"
+    },
+    {
       "method": "_goose/unstable/providers/config/read",
       "requestType": "ProviderConfigReadRequest_unstable",
       "responseType": "ProviderConfigReadResponse_unstable"

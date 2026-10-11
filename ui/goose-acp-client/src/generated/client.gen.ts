@@ -171,6 +171,8 @@ import type {
   ScanRecipeRequest_unstable,
   ScanRecipeResponse_unstable,
   ScheduleRecipeRequest_unstable,
+  ServiceVerifyRequest_unstable,
+  ServiceVerifyResponse_unstable,
   SetConfigExtensionEnabledRequest_unstable,
   SetRecipeSlashCommandRequest_unstable,
   SetSessionSystemPromptRequest_unstable,
@@ -260,6 +262,7 @@ import {
   zRunScheduleNowResponse_unstable,
   zSaveRecipeResponse_unstable,
   zScanRecipeResponse_unstable,
+  zServiceVerifyResponse_unstable,
   zSetToolPermissionsResponse_unstable,
   zSteerSessionResponse_unstable,
   zUpdateScheduleResponse_unstable,
@@ -651,6 +654,18 @@ export class GooseExtClient {
     return zProviderReadinessCheckResponse_unstable.parse(
       raw,
     ) as ProviderReadinessCheckResponse_unstable;
+  }
+
+  async servicesVerify_unstable(
+    params: ServiceVerifyRequest_unstable,
+  ): Promise<ServiceVerifyResponse_unstable> {
+    const raw = await this.conn.request(
+      "_goose/unstable/services/verify",
+      params,
+    );
+    return zServiceVerifyResponse_unstable.parse(
+      raw,
+    ) as ServiceVerifyResponse_unstable;
   }
 
   async providersConfigRead_unstable(

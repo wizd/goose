@@ -6,6 +6,7 @@ import {
   acpListProviderDetails,
   acpListSupportedModels,
   acpReadDefaults,
+  acpVerifyService,
 } from '../../../acp/providers';
 import { IntlTestWrapper } from '../../../i18n/test-utils';
 import { useConfig } from '../../ConfigContext';
@@ -17,6 +18,7 @@ vi.mock('../../../acp/providers', () => ({
   acpListSupportedModels: vi.fn(),
   acpReadDefaults: vi.fn(),
   acpClearDefaults: vi.fn(),
+  acpVerifyService: vi.fn(),
 }));
 
 vi.mock('../../ConfigContext', () => ({ useConfig: vi.fn() }));
@@ -117,6 +119,92 @@ describe('ServicesSection', () => {
         provider: 'vcorp',
       })
     );
-    expect(upsert).not.toHaveBeenCalledWith('GOOSE_SERVICE_CHAT_PROVIDER', expect.anything(), false);
+    expect(upsert).not.toHaveBeenCalledWith(
+      'GOOSE_SERVICE_CHAT_PROVIDER',
+      expect.anything(),
+      false
+    );
+  });
+
+  it('verifies the selected chat model and clears the result when the model changes', async () => {
+    const user = userEvent.setup();
+    vi.mocked(acpVerifyService).mockResolvedValue({
+      ok: true,
+      latencyMs: 820,
+      detail: 'OK',
+      error: null,
+      audio: null,
+    });
+    render(<ServicesSection />, { wrapper: IntlTestWrapper });
+    await screen.findByText('Chat');
+    await waitFor(() => expect(acpListSupportedModels).toHaveBeenCalledWith('vcorp'));
+
+    expect(screen.getByRole('button', { name: 'Vision Verify' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Chat Verify' }));
+
+    expect(await screen.findByText('Available · 820 ms · Reply: OK')).toBeInTheDocument();
+    expect(acpVerifyService).toHaveBeenCalledWith('chat', 'vcorp', 'google/gemini-3.8-flash');
+
+    await user.click(screen.getByLabelText('Chat Model'));
+    await user.click(await screen.findByRole('option', { name: 'google/gemini-pro' }));
+
+    await waitFor(() =>
+      expect(screen.queryByText('Available · 820 ms · Reply: OK')).not.toBeInTheDocument()
+    );
+  });
+
+  it('shows a verification failure', async () => {
+    const user = userEvent.setup();
+    vi.mocked(acpVerifyService).mockResolvedValue({
+      ok: false,
+      latencyMs: 40,
+      detail: null,
+      error: 'bad key',
+      audio: null,
+    });
+    render(<ServicesSection />, { wrapper: IntlTestWrapper });
+    await screen.findByText('Chat');
+
+    await user.click(screen.getByRole('button', { name: 'Chat Verify' }));
+
+    expect(await screen.findByText('Unavailable · bad key')).toBeInTheDocument();
+  });
+
+  it('plays speech audio returned by verification', async () => {
+    const user = userEvent.setup();
+    const play = vi.fn().mockResolvedValue(undefined);
+    const calls: string[] = [];
+    class FakeAudio {
+      constructor(url: string) {
+        calls.push(url);
+      }
+      play = play;
+    }
+    vi.stubGlobal('Audio', FakeAudio);
+    try {
+      vi.mocked(acpVerifyService).mockResolvedValue({
+        ok: true,
+        latencyMs: 100,
+        detail: '12',
+        error: null,
+        audio: { data: 'QQ==', mimeType: 'audio/mpeg' },
+      });
+      render(<ServicesSection />, { wrapper: IntlTestWrapper });
+      await screen.findByText('Text to speech');
+
+      await user.click(screen.getByLabelText('Text to speech Provider'));
+      await user.click(await screen.findByRole('option', { name: 'VCorp' }));
+      await user.click(screen.getByLabelText('Text to speech Model'));
+      fireEvent.click(await screen.findByRole('option', { name: 'google/gemini-3.8-flash' }));
+      await user.click(screen.getByRole('button', { name: 'Text to speech Verify' }));
+      await user.click(await screen.findByRole('button', { name: 'Play' }));
+
+      expect(acpVerifyService).toHaveBeenCalledWith('tts', 'vcorp', 'google/gemini-3.8-flash');
+      expect(calls).toEqual(['data:audio/mpeg;base64,QQ==']);
+      expect(play).toHaveBeenCalled();
+      expect(screen.getByText(/12 bytes/)).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

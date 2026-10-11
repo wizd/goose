@@ -911,6 +911,9 @@
   "dictationSettings.updateApiKey": {
     "defaultMessage": "更新 API 金鑰"
   },
+  "dictationSettings.useServiceConfig": {
+    "defaultMessage": "Use service configuration"
+  },
   "dictationSettings.voiceDictationProvider": {
     "defaultMessage": "語音聽寫供應商"
   },
@@ -3718,6 +3721,102 @@
   },
   "securityToggle.warpNotice": {
     "defaultMessage": "連線至 WARP 時，指令注入偵測的效果最佳（為了連接分類服務所必需）。"
+  },
+  "serviceSettings.chatDescription": {
+    "defaultMessage": "The model used for conversation. This is the same choice as Switch models."
+  },
+  "serviceSettings.chatName": {
+    "defaultMessage": "Chat"
+  },
+  "serviceSettings.description": {
+    "defaultMessage": "Choose a provider and model for each service. The agent uses these when it needs that capability."
+  },
+  "serviceSettings.embeddingDescription": {
+    "defaultMessage": "Turns text into vectors through the embed_text tool."
+  },
+  "serviceSettings.embeddingName": {
+    "defaultMessage": "Embeddings"
+  },
+  "serviceSettings.imageDescription": {
+    "defaultMessage": "Draws images through the generate_image tool."
+  },
+  "serviceSettings.imageName": {
+    "defaultMessage": "Image generation"
+  },
+  "serviceSettings.modelPlaceholder": {
+    "defaultMessage": "Model"
+  },
+  "serviceSettings.notWired": {
+    "defaultMessage": "Not connected yet"
+  },
+  "serviceSettings.providerPlaceholder": {
+    "defaultMessage": "Provider"
+  },
+  "serviceSettings.realtimeDescription": {
+    "defaultMessage": "Saved for a later realtime voice provider. Goose does not call it yet."
+  },
+  "serviceSettings.realtimeName": {
+    "defaultMessage": "Realtime voice"
+  },
+  "serviceSettings.sttDescription": {
+    "defaultMessage": "Transcription used when dictation is set to the service configuration."
+  },
+  "serviceSettings.sttName": {
+    "defaultMessage": "Speech to text"
+  },
+  "serviceSettings.title": {
+    "defaultMessage": "Services"
+  },
+  "serviceSettings.ttsDescription": {
+    "defaultMessage": "Speaks text through the text_to_speech tool."
+  },
+  "serviceSettings.ttsName": {
+    "defaultMessage": "Text to speech"
+  },
+  "serviceSettings.verify": {
+    "defaultMessage": "驗證"
+  },
+  "serviceSettings.verifyAudioBytes": {
+    "defaultMessage": "{count} 位元組"
+  },
+  "serviceSettings.verifyDimensions": {
+    "defaultMessage": "{count} 維"
+  },
+  "serviceSettings.verifyFailed": {
+    "defaultMessage": "無法使用 · {error}"
+  },
+  "serviceSettings.verifyModelNotListed": {
+    "defaultMessage": "端點可連線，但模型清單中沒有這個模型"
+  },
+  "serviceSettings.verifyOk": {
+    "defaultMessage": "可用 · {latency} ms"
+  },
+  "serviceSettings.verifyPlay": {
+    "defaultMessage": "播放"
+  },
+  "serviceSettings.verifyReply": {
+    "defaultMessage": "回覆：{text}"
+  },
+  "serviceSettings.verifyTranscript": {
+    "defaultMessage": "轉寫：{text}"
+  },
+  "serviceSettings.verifyUnknown": {
+    "defaultMessage": "驗證失敗"
+  },
+  "serviceSettings.verifying": {
+    "defaultMessage": "正在驗證"
+  },
+  "serviceSettings.videoDescription": {
+    "defaultMessage": "Saved for a later video service. Goose does not call it yet."
+  },
+  "serviceSettings.videoName": {
+    "defaultMessage": "Video"
+  },
+  "serviceSettings.visionDescription": {
+    "defaultMessage": "Describes images through describe_image when the chat model cannot see them."
+  },
+  "serviceSettings.visionName": {
+    "defaultMessage": "Vision"
   },
   "sessionActionsHeader.actionsLabel": {
     "defaultMessage": "工作階段動作"

@@ -17,7 +17,7 @@ pub struct GeneratedImage {
     pub mime_type: String,
 }
 
-fn prepare(
+pub(crate) fn prepare(
     endpoint: &OpenAiCompatEndpoint,
     versioned: &str,
     versionless: &str,
@@ -42,7 +42,7 @@ fn prepare(
     Ok((client, path))
 }
 
-async fn read_error(response: reqwest::Response) -> String {
+pub(crate) async fn read_error(response: reqwest::Response) -> String {
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
     let mut chars = body.chars();

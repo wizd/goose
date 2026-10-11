@@ -326,6 +326,14 @@ impl GooseAcpAgent {
         self.on_check_provider_readiness(req).await
     }
 
+    #[custom_method(ServiceVerifyRequest)]
+    async fn dispatch_verify_service(
+        &self,
+        req: ServiceVerifyRequest,
+    ) -> Result<ServiceVerifyResponse, agent_client_protocol::Error> {
+        self.on_verify_service(req).await
+    }
+
     #[custom_method(ProviderConfigReadRequest)]
     async fn dispatch_read_provider_config(
         &self,

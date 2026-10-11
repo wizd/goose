@@ -1,9 +1,11 @@
 use goose::config::Config;
 use goose::services::{
-    configured_media_tools, configured_selection, embed_text, generate_image, request_target,
-    resolve_endpoint, speech, strip_openai_endpoint_suffix, transcribe_audio, vision_chat,
-    OpenAiCompatEndpoint, ServiceKind,
+    check_models, configured_media_tools, configured_selection, embed_text, generate_image,
+    image_list_notice, listed_model_ids, red_png, request_target, resolve_endpoint, silent_wav,
+    speech, strip_openai_endpoint_suffix, transcribe_audio, vision_chat, OpenAiCompatEndpoint,
+    ServiceKind, MODEL_NOT_LISTED,
 };
+use image::GenericImageView;
 use serde_json::json;
 use tempfile::NamedTempFile;
 use wiremock::matchers::{method, path};
@@ -162,4 +164,86 @@ async fn service_clients_hit_openai_compatible_paths() {
     assert_eq!(description, "a red square");
 
     server.verify().await;
+}
+
+#[test]
+fn silent_wav_is_one_second_of_16khz_silence() {
+    let wav = silent_wav();
+    assert_eq!(&wav[0..4], b"RIFF");
+    assert_eq!(&wav[8..12], b"WAVE");
+    assert_eq!(u16::from_le_bytes(wav[22..24].try_into().unwrap()), 1);
+    assert_eq!(u32::from_le_bytes(wav[24..28].try_into().unwrap()), 16_000);
+    assert_eq!(u16::from_le_bytes(wav[34..36].try_into().unwrap()), 16);
+    assert_eq!(&wav[36..40], b"data");
+    assert_eq!(u32::from_le_bytes(wav[40..44].try_into().unwrap()), 32_000);
+    assert_eq!(wav.len(), 44 + 32_000);
+    assert!(wav[44..].iter().all(|byte| *byte == 0));
+}
+
+#[test]
+fn red_png_decodes_to_one_red_pixel() {
+    let image = image::load_from_memory(red_png()).unwrap();
+    assert_eq!((image.width(), image.height()), (1, 1));
+    let pixel = image.get_pixel(0, 0);
+    assert_eq!(pixel[0], 255);
+    assert_eq!(pixel[1], 0);
+    assert_eq!(pixel[2], 0);
+}
+
+#[test]
+fn unknown_service_names_are_rejected() {
+    assert_eq!(
+        ServiceKind::from_verify_name("vision"),
+        Some(ServiceKind::Vision)
+    );
+    assert_eq!(
+        ServiceKind::from_verify_name("chat"),
+        Some(ServiceKind::Chat)
+    );
+    assert!(ServiceKind::from_verify_name("realtime").is_none());
+    assert!(ServiceKind::from_verify_name("video").is_none());
+    assert!(ServiceKind::from_verify_name("nope").is_none());
+}
+
+#[test]
+fn image_list_notice_only_warns_when_a_parsed_list_omits_the_model() {
+    let listed = vec!["gpt-image-1".to_string()];
+    assert_eq!(image_list_notice(Some(&listed), "gpt-image-1"), None);
+    assert_eq!(
+        image_list_notice(Some(&listed), "missing"),
+        Some(MODEL_NOT_LISTED)
+    );
+    assert_eq!(image_list_notice(None, "missing"), None);
+    assert_eq!(
+        listed_model_ids(&json!({ "data": [{ "id": "a" }, "b"] })),
+        Some(vec!["a".to_string(), "b".to_string()])
+    );
+    assert_eq!(listed_model_ids(&json!({ "error": "nope" })), None);
+}
+
+#[tokio::test]
+async fn image_verify_checks_auth_without_generating() {
+    let denied = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/v1/models"))
+        .respond_with(ResponseTemplate::new(401).set_body_string("bad key"))
+        .mount(&denied)
+        .await;
+    let error = check_models(&endpoint(&denied.uri()), "gpt-image-1", None)
+        .await
+        .unwrap_err();
+    assert!(error.to_string().contains("authentication failed"));
+
+    let ready = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/v1/models"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": [{ "id": "other-model" }]
+        })))
+        .mount(&ready)
+        .await;
+    let notice = check_models(&endpoint(&ready.uri()), "gpt-image-1", None)
+        .await
+        .unwrap();
+    assert_eq!(notice.as_deref(), Some(MODEL_NOT_LISTED));
 }

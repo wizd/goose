@@ -1256,6 +1256,93 @@ impl GooseAcpAgent {
 
         Ok(CanonicalModelInfoResponse { model_info })
     }
+
+    pub(super) async fn on_verify_service(
+        &self,
+        req: ServiceVerifyRequest,
+    ) -> Result<ServiceVerifyResponse, agent_client_protocol::Error> {
+        let kind = crate::services::ServiceKind::from_verify_name(req.service.trim()).ok_or_else(
+            || {
+                agent_client_protocol::Error::invalid_params()
+                    .data(format!("Unknown service: {}", req.service))
+            },
+        )?;
+        let provider_id = req.provider_id.trim().to_string();
+        let model = req.model.trim().to_string();
+        if provider_id.is_empty() || model.is_empty() {
+            return Err(agent_client_protocol::Error::invalid_params()
+                .data("Provider and model are required"));
+        }
+
+        let started = std::time::Instant::now();
+        let outcome = tokio::time::timeout(std::time::Duration::from_secs(60), async {
+            match kind {
+                crate::services::ServiceKind::Chat => self.verify_chat(&provider_id, &model).await,
+                other => crate::services::verify_media(&provider_id, &model, other).await,
+            }
+        })
+        .await;
+        let latency_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
+
+        let output = match outcome {
+            Ok(Ok(output)) => output,
+            Ok(Err(error)) => return Ok(failed_verify(latency_ms, error.to_string())),
+            Err(_) => {
+                return Ok(failed_verify(
+                    latency_ms,
+                    "Verification timed out after 60 seconds".to_string(),
+                ))
+            }
+        };
+
+        Ok(ServiceVerifyResponse {
+            ok: true,
+            latency_ms,
+            detail: output.detail,
+            error: None,
+            audio: output.audio.map(|audio| ServiceVerifyAudio {
+                data: audio.data,
+                mime_type: audio.mime_type,
+            }),
+        })
+    }
+
+    async fn verify_chat(
+        &self,
+        provider_id: &str,
+        model: &str,
+    ) -> anyhow::Result<crate::services::VerifyMediaOutput> {
+        use goose_providers::model::ModelConfig;
+        use rmcp::model::Tool;
+
+        let provider = self
+            .create_provider(provider_id, Vec::new(), None, false)
+            .await?;
+        let model_config = ModelConfig::new(model);
+        let messages = vec![Message::user().with_text("Reply with OK")];
+        let tools: &[Tool] = &[];
+        let (message, _) = provider
+            .complete(&model_config, "", &messages, tools)
+            .await?;
+        let text = crate::services::preview(&message.as_concat_text(), 200);
+        if text.is_empty() {
+            anyhow::bail!("model returned no text");
+        }
+        Ok(crate::services::VerifyMediaOutput {
+            detail: Some(text),
+            audio: None,
+        })
+    }
+}
+
+fn failed_verify(latency_ms: u64, error: String) -> ServiceVerifyResponse {
+    ServiceVerifyResponse {
+        ok: false,
+        latency_ms,
+        detail: None,
+        error: Some(crate::services::preview(&error, 512)),
+        audio: None,
+    }
 }
 
 #[cfg(test)]

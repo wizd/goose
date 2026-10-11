@@ -3722,6 +3722,39 @@
   "securityToggle.warpNotice": {
     "defaultMessage": "连接到 WARP 时，命令注入检测效果最佳（访问分类服务需要 WARP）。"
   },
+  "serviceSettings.verify": {
+    "defaultMessage": "验证"
+  },
+  "serviceSettings.verifyAudioBytes": {
+    "defaultMessage": "{count} 字节"
+  },
+  "serviceSettings.verifyDimensions": {
+    "defaultMessage": "{count} 维"
+  },
+  "serviceSettings.verifyFailed": {
+    "defaultMessage": "不可用 · {error}"
+  },
+  "serviceSettings.verifyModelNotListed": {
+    "defaultMessage": "端点可达，但模型列表中没有这个模型"
+  },
+  "serviceSettings.verifyOk": {
+    "defaultMessage": "可用 · {latency} ms"
+  },
+  "serviceSettings.verifyPlay": {
+    "defaultMessage": "播放"
+  },
+  "serviceSettings.verifyReply": {
+    "defaultMessage": "回复：{text}"
+  },
+  "serviceSettings.verifyTranscript": {
+    "defaultMessage": "转写：{text}"
+  },
+  "serviceSettings.verifyUnknown": {
+    "defaultMessage": "验证失败"
+  },
+  "serviceSettings.verifying": {
+    "defaultMessage": "正在验证"
+  },
   "sessionActionsHeader.actionsLabel": {
     "defaultMessage": "会话操作"
   },
