@@ -248,6 +248,7 @@ export default function UpdateSection() {
         error: errorMessage(error, 'Failed to install update'),
       }));
       setUpdateStatus('error');
+      setTimeout(() => setUpdateStatus('ready'), 5000);
     }
   };
 
