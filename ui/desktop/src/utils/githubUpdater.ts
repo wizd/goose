@@ -394,7 +394,16 @@ async function writeSwapScript(options: {
     await fs.writeFile(scriptPath, script);
     return {
       command: 'powershell.exe',
-      args: ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', scriptPath],
+      args: [
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-WindowStyle',
+        'Hidden',
+        '-File',
+        scriptPath,
+      ],
     };
   }
 
@@ -447,17 +456,24 @@ async function writeSwapScript(options: {
   return { command: '/bin/sh', args: [scriptPath] };
 }
 
-// Node's detached flag becomes DETACHED_PROCESS on Windows, which leaves the child with no
-// console, and powershell.exe exits before its first statement without one. windowsHide still
-// allocates a console without showing a window, and Windows keeps a child alive after its
-// parent exits, so the swap outlives the quit without detaching. POSIX still detaches so the
-// script survives the app's process group going away.
+// On Windows libuv puts every non-detached child in a kill-on-close job object, so the swap
+// script dies the moment the app quits. Detaching avoids the job but becomes DETACHED_PROCESS,
+// and powershell.exe exits before its first statement without a console. A detached cmd.exe
+// running `start` gives the script its own console outside the job; -WindowStyle Hidden keeps
+// that console out of sight. POSIX detaches so the script survives the app's process group.
 export function launchSwapScript(swap: SwapCommand): void {
-  const child = spawn(swap.command, swap.args, {
-    detached: process.platform !== 'win32',
-    stdio: 'ignore',
-    windowsHide: true,
-  });
+  if (process.platform === 'win32') {
+    const commandLine = [swap.command, ...swap.args].map((arg) => `"${arg}"`).join(' ');
+    const child = spawn('cmd.exe', ['/d', '/s', '/c', `"start "" /min ${commandLine}"`], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true,
+      windowsVerbatimArguments: true,
+    });
+    child.unref();
+    return;
+  }
+  const child = spawn(swap.command, swap.args, { detached: true, stdio: 'ignore' });
   child.unref();
 }
 
