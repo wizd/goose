@@ -1311,9 +1311,7 @@ impl AcpConnection {
         use goose_providers::model::ModelConfig;
         use rmcp::model::Tool;
 
-        let provider = self
-            .create_provider(provider_id, Vec::new(), None, false)
-            .await?;
+        let provider = self.create_provider(provider_id).await?;
         let model_config = ModelConfig::new(model);
         let messages = vec![Message::user().with_text("Reply with OK")];
         let tools: &[Tool] = &[];
