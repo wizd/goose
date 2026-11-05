@@ -8,9 +8,9 @@ pub mod chatrecall;
 pub mod code_execution;
 pub mod developer;
 pub mod ext_manager;
-pub mod media;
 #[cfg(feature = "code-mode")]
 mod javascript;
+pub mod media;
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 pub mod summarize;

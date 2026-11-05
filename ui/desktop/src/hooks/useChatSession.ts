@@ -17,7 +17,7 @@ import {
 import { errorMessage } from '../utils/conversionUtils';
 import type { UseChatSessionParams, UseChatSessionResult } from './useChatSessionTypes';
 import { resolveAcpElicitationRequest } from '../acp/elicitationRequests';
-import { acpChatSessionController } from '../acp/chatSessionController';
+import { acpChatSessionController, type PromptOutcome } from '../acp/chatSessionController';
 import {
   acpChatSessionActions,
   acpChatSessionStore,
@@ -109,9 +109,11 @@ export function useChatSession({
   }, [getCurrentSnapshot, sessionId]);
 
   const onFinish = useCallback(
-    async (error?: string): Promise<void> => {
-      if (error) {
-        toastError({ title: "Couldn't send message", msg: error });
+    async (outcome: PromptOutcome): Promise<void> => {
+      if (outcome.status === 'failed') {
+        if (outcome.message) {
+          toastError({ title: "Couldn't send message", msg: outcome.message });
+        }
       } else {
         try {
           const [notificationsEnabled, anyWindowFocused] = await Promise.all([
@@ -196,9 +198,14 @@ export function useChatSession({
         window.dispatchEvent(new CustomEvent(AppEvents.SESSION_CREATED));
       }
 
-      const newMessage = hasNewMessage
-        ? createUserMessage(userMessage, images)
-        : currentMessages[currentMessages.length - 1];
+      const lastMessage = currentMessages[currentMessages.length - 1];
+      // An empty submit sends the last message again as the prompt; an assistant
+      // reply sent that way reaches the model as if the user had pasted it.
+      if (!hasNewMessage && lastMessage.role !== 'user') {
+        return;
+      }
+
+      const newMessage = hasNewMessage ? createUserMessage(userMessage, images) : lastMessage;
       const messagesForStore = clearsConversation
         ? []
         : hasNewMessage
